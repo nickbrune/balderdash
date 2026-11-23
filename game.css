@@ -274,7 +274,7 @@ body.sim header{display:none}
 .sim-backdrop.show{display:block}
 /* ---------- tutorial ---------- */
 body.tut-open{overflow:hidden}
-#tut{position:fixed;inset:0;z-index:200;background:rgba(5,3,15,.94);display:flex;align-items:safe center;justify-content:center;padding:14px;overflow:auto}
+#tut{position:fixed;inset:0;z-index:200;background:radial-gradient(ellipse 110% 85% at 50% 30%,var(--bg1),var(--bg2) 78%) var(--bg2);display:flex;align-items:safe center;justify-content:center;padding:14px;overflow:auto}
 .tut-tv,.tut-ph{pointer-events:none;user-select:none}
 .tut-in{display:flex;flex-direction:column;gap:14px;align-items:center;max-width:100%}
 .tut-head{display:flex;justify-content:space-between;width:100%;gap:12px;align-items:center}
@@ -286,10 +286,22 @@ body.tut-open{overflow:hidden}
 .tut-phin{width:390px;height:780px;transform-origin:0 0;padding:14px;background:radial-gradient(ellipse 120% 80% at 50% 0%,var(--bg1),var(--bg2) 75%);overflow:hidden;color:var(--on-bg)}
 .tut-ph-top{display:flex;justify-content:space-between;align-items:center;padding:4px 0 22px}
 .tut-ph-who{font-size:12px;color:var(--muted-bg);font-weight:700}
-.tut-capbox{width:min(920px,100%);background:var(--card);color:var(--ink);border:3px solid var(--edge);border-radius:14px;padding:14px 16px;box-shadow:6px 6px 0 var(--pop1)}
+.tut-capbox{margin-top:16px;width:min(920px,100%);background:var(--card);color:var(--ink);border:3px solid var(--edge);border-radius:14px;padding:14px 16px;box-shadow:6px 6px 0 var(--pop1)}
 .tut-cap{margin:0 0 10px;font-size:18px;font-weight:600;line-height:1.4;min-height:3em}
 .tut-dots{display:flex;gap:6px;margin-bottom:12px}
 .tut-dots i{flex:1;height:6px;border-radius:9px;background:var(--line)}
 .tut-dots i.on{background:var(--pop1)}
 .tut-ctrls{display:flex;gap:10px;justify-content:flex-end}
 .tut-ctrls button{width:auto;min-height:44px;padding:8px 18px;font-size:14px}
+/* ---------- tutorial: game-show opening extras ---------- */
+.tut-title{padding:calc(var(--u)*2.2) calc(var(--u)*5);border-radius:calc(var(--u)*2.4);background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,0) 45%),linear-gradient(180deg,var(--tile1),var(--tile2));border:calc(var(--u)*.5) solid var(--gold);--b:calc(var(--u)*1.8);transform:skewX(-6deg);box-shadow:0 calc(var(--u)*1) 0 rgba(0,0,0,.45),0 0 calc(var(--u)*6) var(--glow);margin:calc(var(--u)*2) 0 calc(var(--u)*1)}
+.tut-title b{display:block;font-family:Bungee,Impact,sans-serif;font-weight:400;font-size:calc(var(--u)*10);line-height:1.05;letter-spacing:.03em;background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(calc(var(--u)*.35) calc(var(--u)*.45) 0 var(--pop1))}
+.tut-sub{font-size:calc(var(--u)*2.8)!important}
+.tut-caphead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-30px 0 8px}
+.tut-tag{display:inline-block;font-family:Bungee,sans-serif;font-size:15px;color:var(--ink);background:linear-gradient(180deg,#fff6c8,var(--gold));border:2px solid var(--edge);border-radius:8px;padding:.35em .9em;box-shadow:0 3px 0 rgba(0,0,0,.45);transform:skewX(-8deg)}
+.tut-tag:empty{display:none}
+.tut-tag.pop{animation:tagpop .5s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes tagpop{from{opacity:0;transform:skewX(-8deg) translateX(-30px)}to{opacity:1;transform:skewX(-8deg)}}
+.tut-spk{font-family:Bungee,sans-serif;font-size:12px;letter-spacing:.06em;color:var(--pop1);margin-top:22px}
+.tut-ctrls{flex-wrap:wrap}
+@media (prefers-reduced-motion:reduce){.tut-tag.pop{animation:none}}

@@ -171,50 +171,113 @@ function simToggleAuto(){
 }
 Object.assign(H,{sim(){openSim()},simexit(){exitSim()},simadd(){simAddPhone()},simrm(){simRemovePhone()},simstep(){simStep()},simauto(){simToggleAuto()}});
 
-/* ================= narrated tutorial ================= */
-const TUT={lastLineAt:0,on:false,i:0,timers:[],tick:null,offLine:null,mode:'',animKey:'',startAt:0};
+/* ================= studio sound effects (generated live, no audio files) ================= */
+const SFX={ctx:null,master:null,noiseBuf:null,muted:false,
+  init(){
+    if(this.ctx){if(this.ctx.state==='suspended')this.ctx.resume().catch(()=>{});return;}
+    try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;this.ctx=new AC();
+      this.master=this.ctx.createGain();this.master.gain.value=this.muted?0:.32;this.master.connect(this.ctx.destination);
+      const n=this.ctx.sampleRate,b=this.ctx.createBuffer(1,n,n),d=b.getChannelData(0);for(let k=0;k<n;k++)d[k]=Math.random()*2-1;this.noiseBuf=b;}catch(e){this.ctx=null;}
+  },
+  setMuted(m){this.muted=m;if(this.master)this.master.gain.value=m?0:.32;},
+  stop(){if(this.master){try{this.master.disconnect();}catch(e){}this.master=this.ctx.createGain();this.master.gain.value=this.muted?0:.32;this.master.connect(this.ctx.destination);}},
+  ok(){return !!(this.ctx&&this.master);},
+  tone(f,t0,dur,{type='sawtooth',vol=.16,att=.02,cut=2400,detune=0}={}){
+    const c=this.ctx,o=c.createOscillator(),g=c.createGain(),fl=c.createBiquadFilter();
+    o.type=type;o.frequency.value=f;o.detune.value=detune;fl.type='lowpass';fl.frequency.value=cut;
+    g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+att);g.gain.setValueAtTime(vol,t0+Math.max(att,dur*.65));g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+    o.connect(fl);fl.connect(g);g.connect(this.master);o.start(t0);o.stop(t0+dur+.05);
+  },
+  noise(t0,dur,{vol=.2,type='bandpass',freq=1500,q=1,att=.003,from=null}={}){
+    const c=this.ctx,s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();
+    s.buffer=this.noiseBuf;s.loop=true;f.type=type;f.frequency.value=freq;f.Q.value=q;
+    if(from!=null){f.frequency.setValueAtTime(from,t0);f.frequency.exponentialRampToValueAtTime(freq,t0+dur);}
+    g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+att);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+    s.connect(f);f.connect(g);g.connect(this.master);s.start(t0,Math.random()*.5);s.stop(t0+dur+.05);
+  },
+  play(name,delay=0){
+    if(!this.ok()||this.muted)return;const t=this.ctx.currentTime+.03+delay/1000;
+    const brass=(f,t0,d,v=.11)=>{this.tone(f,t0,d,{vol:v,cut:2600});this.tone(f,t0,d,{vol:v*.8,cut:2600,detune:9});};
+    switch(name){
+      case 'fanfare':{const seq=[392,523.25,659.25,783.99];seq.forEach((f,k)=>brass(f,t+k*.13,.16));
+        [523.25,659.25,783.99,1046.5].forEach(f=>brass(f,t+.56,1.5,.085));brass(130.81,t+.56,1.5,.12);
+        this.noise(t+.56,1.3,{vol:.05,type:'highpass',freq:6000,att:.01});break;}
+      case 'ding':{this.tone(1318.5,t,1.3,{type:'sine',vol:.22,att:.005,cut:8000});this.tone(2637,t,.7,{type:'sine',vol:.08,att:.005,cut:9000});break;}
+      case 'dingding':{this.play('ding',delay);this.play('ding',delay+260);break;}
+      case 'whoosh':{this.noise(t,.9,{vol:.9,freq:2800,from:300,q:.6,att:.25});break;}
+      case 'drumroll':{const dur=2.1;for(let k=0;k<dur/.045;k++){const tk=t+k*.045;this.noise(tk,.05,{vol:.12+.3*(k*.045/dur),freq:900+Math.random()*300,q:.9});}
+        this.noise(t+dur,1.4,{vol:.22,type:'highpass',freq:3500,att:.004});this.noise(t+dur,.25,{vol:.3,type:'lowpass',freq:200,att:.002});break;}
+      case 'applause':{const dur=3.2;for(let k=0;k<dur*70;k++){const tk=t+Math.random()*dur;const env=Math.min(1,(tk-t)/.5)*Math.min(1,(t+dur-tk)/1.2);
+          this.noise(tk,.035,{vol:.55*env*(.5+Math.random()),freq:1000+Math.random()*1800,q:1.1,att:.002});}
+        this.noise(t,dur,{vol:.16,type:'bandpass',freq:1400,q:.5,att:.5});break;}
+    }
+  }
+};
+
+/* ================= the tutorial: a 1980s game-show opening ================= */
+const TUT={lastLineAt:0,on:false,i:0,timers:[],tick:null,offLine:null,mode:'',animKey:'',shown:-1};
+const VOICES={announcer:{voice:'rounded',rate:.94},host:{voice:'buttery',rate:1.1}};
 function tutData(){
-  const names={a:'Nate',b:'Sarah',c:'Mike',d:'Jess'};const now=Date.now();
+  const names={a:'Nate',b:'Sarah',c:'Mike',d:'Jess'};
   const real='Giant mutant rabbits terrorize a ranching town in Arizona.';
   const opts=[{t:'A small-town sheriff discovers the local bowling league is run by werewolves.',a:'c'},{t:'Two rival lighthouse keepers fall in love during a 40-day storm.',a:'a'},{t:real,a:'*'},{t:'A retired astronaut trains a team of competitive sheepdogs.',a:'d'}];
   const votes={a:0,d:0,c:2};
   const base={v:1,theme:'classic',round:3,target:15,tlen:180,order:['a','b','c','d'],names,scores:{a:6,b:8,c:7,d:5},seqs:{},dasher:'b',cat:'movie',
     word:'Night of the Lepus (1972)',def:real,cardKey:'x',spin:null,deadline:0,opts:[],votes:{},closed:[],closedT:{},step:0,scored:false};
-  return {names,real,opts,votes,base,now};
+  return {names,real,opts,votes,base};
 }
-function tutPhone(title,body){
-  return `<div class="tut-ph-top"><span class="logo">${logoHTML(S.theme)}</span><span class="tut-ph-who">${esc(title)}</span></div>${body}`;
+function tutPhone(title,body){return `<div class="tut-ph-top"><span class="logo">${logoHTML('classic')}</span><span class="tut-ph-who">${esc(title)}</span></div>${body}`;}
+function tutTitleTV(big,sub,applause){
+  return `<div class="bd noside"><div class="bd-main"><div class="bd-stage"><div class="bd-center anim">${applause?'<div class="applause">APPLAUSE</div>':''}
+    <div class="tut-title marquee"><b>${big}</b></div><div class="bd-head tut-sub">${sub}</div></div></div></div></div>`;
 }
 function tutScenes(){
-  const D=tutData();const B=D.base;const chips=(done)=>`<div class="chips">${['Nate','Sarah','Mike','Jess'].map(n=>`<span class="chip ${done&&done.includes(n)?'done':''}">${n==='Sarah'?'🎤':''}${n}</span>`).join('')}</div>`;
+  const D=tutData();const B=D.base;
+  const chips=done=>`<div class="chips">${['Nate','Sarah','Mike','Jess'].map(n=>`<span class="chip ${done&&done.includes(n)?'done':''}">${n==='Sarah'?'🎤':''}${n}</span>`).join('')}</div>`;
+  const watch=tutPhone("Mike's phone",waitCard('👀 Eyes on the big screen!'));
   return [
-    {text:"This is Balderdash, the bluffing game. One screen runs the game, and everyone plays on their own phone. Scan the QR code, type your name, and you're in.",dur:9000,
+    {who:'announcer',tag:'Tonight’s game',sfx:['fanfare','applause'],dur:7000,
+     text:"Live from your living room... it's the game where the best liar wins! It's... Balderdash!",
+     tv:()=>tutTitleTV('BALDERDASH','The bluffing game show',true),
+     phone:()=>tutPhone('Your phone',`<div class="card center stack"><div style="font-size:54px;line-height:1">📱</div><div class="word">Get your phone ready!</div><p class="muted" style="margin:0">It's your game controller tonight.</p></div>`)},
+    {who:'host',tag:'Step 1 · Grab your phone',sfx:['ding'],dur:9000,
+     text:"Thank you, thank you! Welcome to the show! Getting in is easy: scan the code on the screen, type your name, and boom! You're a contestant!",
      G:()=>Object.assign({},B,{phase:'lobby',round:0,scores:{a:0,b:0,c:0,d:0},dasher:null}),
      phone:()=>tutPhone("Mike's phone",`<div class="card stack"><span class="eyebrow">📱 Join a game</span><input value="Mike" readonly aria-label="Name"><div class="row"><input class="code-in" value="DEMO" readonly aria-label="Room code"><button class="accent">Join</button></div></div>`)},
-    {text:"Every round, a different player hosts. The host spins the wheel to pick a category: a word, a person, initials, a movie, or a law.",dur:8000,
+    {who:'host',tag:'Step 2 · Take your turn as host',sfx:[],dur:7000,
+     text:"Every round, one lucky player becomes the host. And hosts... you get to spin... the... wheel!",
      G:()=>Object.assign({},B,{phase:'pick'}),
      phone:()=>tutPhone("Sarah's phone · host",`<div class="card hostcall marquee center"><span class="eyebrow">Round 3 · You're the host</span><div class="word">🎤 Your round!</div></div><button class="accent big">🎡 Spin the wheel</button>`)},
-    {text:"The wheel lands on Movie. Only the host sees the real answer, so keep a straight face.",dur:7500,
+    {who:'host',tag:'Five ways to fool your friends',sfx:['whoosh',['ding',4200]],dur:9000,
+     text:"Words! People! Initials! Movies! And laws! Round and round it goes... and it's a Movie! Only the host sees the real answer, so keep that poker face!",
      G:()=>Object.assign({},B,{phase:'card',spin:{c:'movie',id:Date.now()}}),
-     phone:()=>tutPhone("Sarah's phone · host",`<div class="card secret stack after" style="animation-delay:3.6s"><span class="eyebrow">🎬 Movie · only you can see this</span><div class="word">Night of the Lepus (1972)</div><p class="def">${esc(D.real)}</p><button class="accent">📺 Show question on screen</button></div>`)},
-    {text:"The question goes up on the big screen and the clock starts. Everyone else gets three minutes to write a fake answer that sounds totally real.",dur:9000,
+     phone:()=>tutPhone("Sarah's phone · host",`<div class="card secret stack after" style="animation-delay:4s"><span class="eyebrow">🎬 Movie · only you can see this</span><div class="word">Night of the Lepus (1972)</div><p class="def">${esc(D.real)}</p><button class="accent">📺 Show question on screen</button></div>`)},
+    {who:'host',tag:'Step 3 · Bluff!',sfx:['ding'],dur:9500,
+     text:"Up goes the question, and the clock is ticking! You've got three minutes to cook up a fake answer so convincing... your own mother would believe it!",
      G:()=>Object.assign({},B,{phase:'write',deadline:Date.now()+172000}),inp:{a:{sub:'x'},c:{sub:'x'}},
      phone:()=>tutPhone("Mike's phone",`${chips(['Nate','Mike'])}<div class="card stack"><label class="eyebrow">Write a one-line plot summary</label><textarea readonly aria-label="Answer">A small-town sheriff discovers the local bowling league is run by werewolves.</textarea><button class="accent big">Lock in my answer</button></div>`)},
-    {text:"The host puts every answer on the screen, with the real one hidden among the bluffs. Now everyone votes for the one they think is true.",dur:9000,
+    {who:'host',tag:'Step 4 · Spot the truth',sfx:['ding'],dur:9000,
+     text:"And now, the moment of truth! Every answer hits the board, with the real one hiding among the fakes. Can you spot it? Lock in your vote!",
      G:()=>Object.assign({},B,{phase:'vote',opts:D.opts,def:''}),inp:{c:{vote:2}},
      phone:()=>tutPhone("Mike's phone",`<div class="card stack"><span class="eyebrow">Which one is real?</span>${D.opts.map((o,i)=>`<div class="opt ${i===2?'sel':''} ${o.a==='c'?'mine':''}"><span class="n">${i+1}</span>${esc(o.t)}${o.a==='c'?'<span class="tag">Yours</span>':''}</div>`).join('')}</div>`)},
-    {text:"Then the reveal. First, who voted for what.",dur:5000,
-     G:()=>Object.assign({},B,{phase:'reveal',step:1,opts:D.opts,votes:D.votes,def:''}),
-     phone:()=>tutPhone("Mike's phone",waitCard('👀 Watch the main screen!'))},
-    {text:"Then who wrote each answer. Mike's werewolf bowling league fooled two people, and he found the real answer too.",dur:8000,
-     G:()=>Object.assign({},B,{phase:'reveal',step:2,opts:D.opts,votes:D.votes,def:''}),
-     phone:()=>tutPhone("Mike's phone",waitCard('👀 Watch the main screen!'))},
-    {text:"Find the real answer for two points. Score a point for every player your bluff fools. If nobody finds it, the host gets three. First to fifteen wins. Happy bluffing!",dur:11000,
+    {who:'host',tag:'The big reveal',sfx:['drumroll'],dur:5000,
+     text:"Let's see how everybody voted...",
+     G:()=>Object.assign({},B,{phase:'reveal',step:1,opts:D.opts,votes:D.votes,def:''}),phone:()=>watch},
+    {who:'host',tag:'The big reveal',sfx:['applause'],burst:true,dur:8500,
+     text:"And here's who wrote what! Ohhh! Mike's werewolf bowling league fooled two people, and he found the real answer! Give it up for Mike!",
+     G:()=>Object.assign({},B,{phase:'reveal',step:2,opts:D.opts,votes:D.votes,def:''}),phone:()=>watch},
+    {who:'host',tag:'How to win',sfx:['dingding'],dur:10500,
+     text:"Here's how you score! Two points for finding the truth. One point for every friend you fool. And if nobody finds it, the host takes three! First to fifteen wins it all!",
      G:()=>{const g=Object.assign({},B,{phase:'reveal',step:3,opts:D.opts,votes:D.votes,def:'',scores:Object.assign({},B.scores)});const d=deltas(g);for(const k in d)g.scores[k]+=d[k];g.scored=true;return g;},
-     phone:()=>{const g=tutScenes._last;return tutPhone("Mike's phone",`<div class="card"><span class="eyebrow">Scores</span>${scoreList(g,deltas(g))}</div>`)}}
+     phone:()=>{const g=tutScenes._last;return tutPhone("Mike's phone",`<div class="card"><span class="eyebrow">Scores</span>${scoreList(g,deltas(g))}</div>`)}},
+    {who:'announcer',tag:'Let’s play!',sfx:['fanfare','applause'],burst:true,dur:7000,
+     text:"So grab your phones, sharpen those bluffs, and get ready to play... Balderdash!",
+     tv:()=>tutTitleTV('LET’S PLAY!','Scan the code to join the game',true),
+     phone:()=>tutPhone('Your phone',`<div class="card center stack"><div style="font-size:54px;line-height:1">🎉</div><div class="word">Come on down!</div><p class="muted" style="margin:0">Close this and tap <b>Join a game</b> to play.</p></div>`)}
   ];
 }
 function tutTV(sc){
+  if(sc.tv)return sc.tv();
   const G=sc._g;const present=new Set(G.order);const inp={};for(const p of G.order)inp[p]=Object.assign({name:G.names[p],sub:null,vote:null,cmd:null},(sc.inp||{})[p]||{});
   const save={code:S.code,key:S.bAnimKey,conf:S.confirm};S.code='DEMO';S.bAnimKey=TUT.animKey;S.confirm=null;
   let html='';try{html=boardView({G,inp,present,boards:0,pres:()=>null});}catch(e){html='';}
@@ -222,58 +285,66 @@ function tutTV(sc){
 }
 function tutLayout(){
   const o=$('#tut');if(!o)return;const wide=innerWidth>=820;
-  let tvW=wide?Math.min(innerWidth*.6,(innerHeight-230)*16/9):innerWidth-28;tvW=Math.max(240,tvW);
+  let tvW=wide?Math.min(innerWidth*.6,(innerHeight-250)*16/9):innerWidth-28;tvW=Math.max(240,tvW);
   const tvH=tvW*9/16;const sc=tvW/1920;
-  const ph=wide?Math.min(tvH/780,.62):Math.max(.3,Math.min((innerHeight-tvH-330)/780,.5));
+  const ph=wide?Math.min(tvH/780,.62):Math.max(.26,Math.min((innerHeight-tvH-430)/780,.45));
   const tv=$('#tut-tv'),p=$('#tut-ph');
   tv.style.width=tvW+'px';tv.style.height=tvH+'px';tv.firstElementChild.style.transform=`scale(${sc})`;
   p.style.width=(390*ph)+'px';p.style.height=(780*ph)+'px';p.firstElementChild.style.transform=`scale(${ph})`;
 }
 function tutShow(i){
   const scenes=TUT.scenes;if(i<0||i>=scenes.length)return;TUT.i=i;const sc=scenes[i];
-  sc._g=sc.G();tutScenes._last=sc._g;
+  sc._g=sc.G?sc.G():{phase:'title'};tutScenes._last=sc._g;
   $('#tut-tvin').innerHTML=tutTV(sc);$('#tut-phin').innerHTML=sc.phone();
+  $('#tut-spk').textContent=sc.who==='announcer'?'🎙️ Announcer':'🎤 Your host';
+  $('#tut-tag').textContent=sc.tag;const tg=$('#tut-tag');tg.classList.remove('pop');void tg.offsetWidth;tg.classList.add('pop');
   $('#tut-cap').textContent=sc.text;
   $('#tut-dots').innerHTML=scenes.map((_,k)=>`<i class="${k<=i?'on':''}"></i>`).join('');
   $('#tut-next').textContent=i>=scenes.length-1?'↺ Replay':'⏭ Skip';
+  if(TUT.shown!==i){TUT.shown=i;for(const s of sc.sfx||[]){if(Array.isArray(s))SFX.play(s[0],s[1]);else SFX.play(s);}
+    if(sc.burst)setTimeout(()=>{if(TUT.on)burst();},250);}
 }
 function tutTimed(from){
   TUT.mode='timed';TUT.timers.forEach(clearTimeout);TUT.timers=[];let t=0;
   for(let k=from;k<TUT.scenes.length;k++){const kk=k;TUT.timers.push(setTimeout(()=>tutShow(kk),t));t+=TUT.scenes[k].dur;}
 }
 function tutSpeak(from){
-  TUT.timers.forEach(clearTimeout);TUT.timers=[];tutShow(from);
-  if(!S.tts){$('#tut-voice').textContent=window.__NET?'Captions only (this browser can\'t read aloud)':'Captions only (narration plays in desktop Chrome or Edge)';tutTimed(from);return;}
-  TUT.mode='voice';$('#tut-voice').textContent='🔊 Narration on';
+  TUT.timers.forEach(clearTimeout);TUT.timers=[];TUT.shown=-1;tutShow(from);
+  if(!S.tts){$('#tut-voice').textContent='Captions only (this browser can’t read aloud)';tutTimed(from);return;}
+  TUT.mode='voice';$('#tut-voice').textContent='';
   TUT.lastLineAt=Date.now();
   if(!TUT.offLine)TUT.offLine=S.tts.onLine(e=>{if(!TUT.on||TUT.mode!=='voice')return;TUT.lastLineAt=Date.now();const k=+String(e.id||'').slice(1);if(Number.isInteger(k)&&k!==TUT.i)tutShow(k);});
-  const lines=TUT.scenes.slice(from).map((s,k)=>({text:s.text,id:'s'+(from+k)}));
-  S.tts.speak(lines,{voice:'buttery',language:'en'}).catch(e=>{
+  const lines=TUT.scenes.slice(from).map((s,k)=>Object.assign({text:s.text,id:'s'+(from+k),language:'en'},VOICES[s.who]||VOICES.host));
+  S.tts.speak(lines,{language:'en'}).catch(e=>{
     if(!TUT.on)return;if(e&&e.code==='stopped'&&e.reason==='replaced')return;
-    $('#tut-voice').textContent='Captions only';tutTimed(TUT.i+ (e&&e.code==='stopped'?0:0));
+    $('#tut-voice').textContent='Captions only';tutTimed(TUT.i);
   });
 }
 function openTutorial(){
-  closeTutorial(true);TUT.on=true;TUT.scenes=tutScenes();TUT.animKey='';
+  closeTutorial(true);TUT.on=true;TUT.scenes=tutScenes();TUT.animKey='';TUT.shown=-1;
+  SFX.init();
   const o=document.createElement('div');o.id='tut';o.setAttribute('role','dialog');o.setAttribute('aria-label','How to play Balderdash');
-  o.innerHTML=`<div class="tut-in"><div class="tut-head"><span class="eyebrow">▶ How to play · 1 minute</span><span class="tut-voice" id="tut-voice"></span></div>
+  o.innerHTML=`<div class="tut-in"><div class="tut-head"><span class="eyebrow">▶ How to play · about a minute</span><span class="tut-voice" id="tut-voice"></span></div>
     <div class="tut-stage"><div class="tut-tv" id="tut-tv" inert><div class="tut-tvin" id="tut-tvin"></div></div><div class="tut-ph" id="tut-ph" inert><div class="tut-phin" id="tut-phin"></div></div></div>
-    <div class="tut-capbox"><p class="tut-cap" id="tut-cap" aria-live="polite"></p><div class="tut-dots" id="tut-dots"></div>
-    <div class="tut-ctrls"><button class="sec" id="tut-next" data-act="tutnext">⏭ Skip</button><button class="accent" data-act="tutclose">✕ Close</button></div></div></div>`;
+    <div class="tut-capbox"><div class="tut-caphead"><span class="tut-tag" id="tut-tag"></span><span class="tut-spk" id="tut-spk"></span></div><p class="tut-cap" id="tut-cap" aria-live="polite"></p><div class="tut-dots" id="tut-dots"></div>
+    <div class="tut-ctrls"><button class="sec" data-act="tutsound" id="tut-sound" aria-pressed="${!SFX.muted}">${SFX.muted?'🔇 Sound off':'🔊 Sound on'}</button><button class="sec" id="tut-next" data-act="tutnext">⏭ Skip</button><button class="accent" data-act="tutclose">✕ Close</button></div></div></div>`;
   document.body.appendChild(o);document.body.classList.add('tut-open');
   tutLayout();window.addEventListener('resize',tutLayout);
   TUT.tick=setInterval(()=>{if(!TUT.on)return;
-    if(TUT.mode==='voice'){const sc=TUT.scenes[TUT.i];if(sc&&Date.now()-TUT.lastLineAt>sc.dur+5000&&TUT.i<TUT.scenes.length-1){TUT.mode='timed';try{S.tts.stop().catch(()=>{});}catch(e){}$('#tut-voice').textContent='Captions only';tutTimed(TUT.i+1);}}const sc=TUT.scenes[TUT.i];if(sc&&sc._g&&(sc._g.phase==='write'||sc._g.phase==='card'))$('#tut-tvin').innerHTML=tutTV(sc);},500);
+    if(TUT.mode==='voice'){const sc=TUT.scenes[TUT.i];if(sc&&Date.now()-TUT.lastLineAt>sc.dur+5000&&TUT.i<TUT.scenes.length-1){TUT.mode='timed';try{S.tts.stop().catch(()=>{});}catch(e){}$('#tut-voice').textContent='Captions only';tutTimed(TUT.i+1);}}
+    const sc=TUT.scenes[TUT.i];if(sc&&sc._g&&(sc._g.phase==='write'||sc._g.phase==='card'))$('#tut-tvin').innerHTML=tutTV(sc);},500);
   tutSpeak(0);
 }
 function closeTutorial(silent){
   TUT.on=false;TUT.timers.forEach(clearTimeout);TUT.timers=[];clearInterval(TUT.tick);
   if(TUT.offLine){try{TUT.offLine()}catch(e){}TUT.offLine=null;}
   if(S.tts&&!silent)S.tts.stop().catch(()=>{});
+  SFX.stop();
   const o=$('#tut');if(o)o.remove();document.body.classList.remove('tut-open');window.removeEventListener('resize',tutLayout);
 }
 Object.assign(H,{
   tutorial(){openTutorial()},
   tutclose(){closeTutorial()},
-  tutnext(){if(!TUT.on)return;const n=TUT.i>=TUT.scenes.length-1?0:TUT.i+1;if(TUT.mode==='voice'&&S.tts)tutSpeak(n);else{tutShow(n);tutTimed(n);}}
+  tutsound(b){SFX.init();SFX.setMuted(!SFX.muted);if(SFX.muted)SFX.stop();b.textContent=SFX.muted?'🔇 Sound off':'🔊 Sound on';b.setAttribute('aria-pressed',String(!SFX.muted));},
+  tutnext(){if(!TUT.on)return;SFX.init();const n=TUT.i>=TUT.scenes.length-1?0:TUT.i+1;if(TUT.mode==='voice'&&S.tts)tutSpeak(n);else{TUT.shown=-1;tutShow(n);tutTimed(n);}}
 });

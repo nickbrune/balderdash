@@ -99,7 +99,17 @@
   function browserTTS(){
     const ss=window.speechSynthesis;if(!ss||!window.SpeechSynthesisUtterance)return null;
     let lineFns=[],gen=0,pending=null;
-    const pickVoice=()=>{const vs=ss.getVoices()||[];return vs.find(v=>/^en(-|_)US/i.test(v.lang)&&/Samantha|Google US|Aria|Jenny|Natural/i.test(v.name))||vs.find(v=>/^en/i.test(v.lang))||null;};
+    // Pick the most natural-sounding English voice this device has. Neural "Natural"/"Online" voices (Edge, Windows) and
+    // Google's voices (Chrome) sound far less robotic than the old system voices.
+    const MALE=/Guy|Andrew|Brian|Christopher|Eric|Roger|Davis|Steffan|Tony|Jason|Alex\b|Daniel|Aaron|Arthur|Evan|Fred|Male/i;
+    const FEMALE=/Jenny|Aria|Ava|Emma|Michelle|Ana|Sara|Samantha|Allison|Susan|Zira|Female|Google US English/i;
+    const score=(v,want)=>{let s=0;if(/^en(-|_)US/i.test(v.lang))s+=4;else if(/^en/i.test(v.lang))s+=2;else return -1;
+      if(/Natural|Online|Neural|Premium|Enhanced/i.test(v.name))s+=6;if(/Google/i.test(v.name))s+=3;
+      if(want==='m'&&MALE.test(v.name))s+=3;if(want==='f'&&FEMALE.test(v.name))s+=3;if(/Compact|eSpeak/i.test(v.name))s-=4;return s;};
+    const best=want=>{const vs=(ss.getVoices()||[]).slice();vs.sort((x,y)=>score(y,want)-score(x,want));return vs[0]&&score(vs[0],want)>=0?vs[0]:null;};
+    // The game asks for "rounded" for its announcer and "buttery" for its host.
+    const STYLE={rounded:{want:'m',pitch:.82,rate:.93},buttery:{want:'f',pitch:1.08,rate:1.1}};
+    try{ss.getVoices();if(typeof ss.addEventListener==='function')ss.addEventListener('voiceschanged',()=>{});}catch(e){}
     const cancelPending=reason=>{if(pending){const r=pending;pending=null;r(err('stopped'));}};
     return {
       speak(what,opts){
@@ -107,8 +117,10 @@
         gen++;const my=gen;cancelPending('replaced');ss.cancel();
         return new Promise((res,rej)=>{
           if(!lines.length)return res({playedMs:0});
-          pending=rej;const v=pickVoice();
-          lines.forEach((l,i)=>{const u=new SpeechSynthesisUtterance(String(l.text||''));if(v)u.voice=v;u.lang=(v&&v.lang)||'en-US';u.rate=(opts&&opts.rate)||1.03;
+          pending=rej;
+          lines.forEach((l,i)=>{const st=STYLE[l.voice||(opts&&opts.voice)]||STYLE.buttery;const v=best(st.want);
+            const u=new SpeechSynthesisUtterance(String(l.text||''));if(v)u.voice=v;u.lang=(v&&v.lang)||'en-US';
+            u.rate=Math.min(1.5,(st.rate)*((l.rate||1)/((l.voice==='rounded')?.94:1.1)));u.pitch=st.pitch;
             u.onstart=()=>{if(my===gen)lineFns.forEach(f=>{try{f({line:i,id:l.id});}catch(e){}});};
             if(i===lines.length-1)u.onend=()=>{if(my===gen&&pending===rej){pending=null;res({playedMs:0});}};
             u.onerror=e=>{if(my===gen&&pending===rej&&e.error!=='interrupted'&&e.error!=='canceled'){pending=null;rej(err('upstream_error'));}};

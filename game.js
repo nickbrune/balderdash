@@ -1,11 +1,16 @@
 const ART_URL=window.__JOIN_BASE||'https://claude.ai/artifact/8Q7btX14uW78JhEtjJPjRT';
 const SPIN_MS=4200;
 const CATS={
- word:{label:'Word',icon:'📖',color:'#b8432f',eyebrow:'What does this word mean?',prompt:'Write a definition that sounds real',ph:'A small…',hint:'Write it like a dictionary would.',real:'The real definition',task:'write a fake definition'},
- person:{label:'Person',icon:'🧑',color:'#24527a',eyebrow:'Who is this person?',prompt:'Who are they, and what are they known for?',ph:'An 18th-century inventor who…',hint:'Sound like an encyclopedia entry.',real:'The real answer',task:'invent who this person was'},
- initials:{label:'Initials',icon:'🔤',color:'#2e7a4d',eyebrow:'What do these initials stand for?',prompt:'What do the letters stand for?',ph:'Spell out each letter…',hint:'Make every letter count.',real:'What it really stands for',task:'spell out the initials'},
- movie:{label:'Movie',icon:'🎬',color:'#b8892a',eyebrow:'What is this movie about?',prompt:'Write a one-line plot summary',ph:'A retired lighthouse keeper…',hint:'Think TV-guide blurb.',real:'The real plot',task:'invent the plot'},
- law:{label:'Law',icon:'⚖️',color:'#6b4a8a',eyebrow:'Finish this real law',prompt:'How does this law end?',ph:'…',hint:'Just write the ending of the sentence.',real:'The real law',task:'finish the law'}
+ word:{label:'Word',icon:'📖',color:'#b8432f',eyebrow:'What does this word mean?',prompt:'Write a definition that sounds real',ph:'A small…',hint:'Write it like a dictionary would.',real:'The real definition',task:'write a fake definition',
+   coach:['One plain sentence, like a dictionary. Skip the jokes.','Things often start with “A…” or “The…”; actions with “To…”.']},
+ person:{label:'Person',icon:'🧑',color:'#24527a',eyebrow:'Who is this person?',prompt:'Who are they, and what are they known for?',ph:'An 18th-century inventor who…',hint:'Sound like an encyclopedia entry.',real:'The real answer',task:'invent who this person was',
+   coach:['Say who they were and why they’re remembered, in one sentence.','A specific detail, like a year, a place or a job, makes it believable.']},
+ initials:{label:'Initials',icon:'🔤',color:'#2e7a4d',eyebrow:'What do these initials stand for?',prompt:'What do the letters stand for?',ph:'Spell out each letter…',hint:'Make every letter count.',real:'What it really stands for',task:'spell out the initials',
+   coach:['Spell out every letter, in order.','Real ones are usually a company, group or technical term, and a few are in another language.']},
+ movie:{label:'Movie',icon:'🎬',color:'#b8892a',eyebrow:'What is this movie about?',prompt:'Write a one-line plot summary',ph:'A retired lighthouse keeper…',hint:'Think TV-guide blurb.',real:'The real plot',task:'invent the plot',
+   coach:['One sentence of plot that starts with who the story is about.','Specific and a little odd beats silly. Real ones are often strange.']},
+ law:{label:'Law',icon:'⚖️',color:'#6b4a8a',eyebrow:'Finish this real law',prompt:'How does this law end?',ph:'…',hint:'Just write the ending of the sentence.',real:'The real law',task:'finish the law',
+   coach:['Write only the ending, usually just a few words.','Pick up exactly where the sentence stops.']}
 };
 const CAT_KEYS=Object.keys(CATS);
 const STAR=c=>`<svg viewBox="0 0 40 40"><path d="M20 1 L24.5 15.5 L39 20 L24.5 24.5 L20 39 L15.5 24.5 L1 20 L15.5 15.5 Z" fill="${c}"/></svg>`;
@@ -84,13 +89,47 @@ function startRound(g,inp,present){
   g.round++;g.phase='pick';g.cat='word';g.word='';g.def='';g.cardKey='';g.spin=null;g.deadline=0;
   g.opts=[];g.votes={};g.closed=[];g.closedT={};g.step=0;g.scored=false;
 }
+/* Tidy every answer the same way, so punctuation and capitals don't give the real one away. */
+function tidy(text,cat,word){
+  let t=String(text==null?'':text).replace(/\s+/g,' ').trim();
+  {const m=/^["“”'‘’](.*)["“”'‘’]$/.exec(t);if(m&&!/["“”]/.test(m[1]))t=m[1].trim();}   // whole answer wrapped in quotes
+  if(word&&cat!=='law'){                                                // "Gongoozler: a person who…" -> "a person who…"
+    const bare=String(word).replace(/\s*\([^)]*\)\s*$/,'').trim();
+    for(const w of [String(word),bare]){const re=new RegExp('^'+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*(?:[:=,\\-–—]|\\bis\\b|\\bmeans\\b)\\s*','i');if(re.test(t)){t=t.replace(re,'');break;}}
+  }
+  if(cat==='law')t=t.replace(/^(?:\.{2,}|…)\s*/,'');                    // typed their own "…"
+  t=t.replace(/\s+([.,!?;:])/g,'$1').replace(/([!?])\1+/g,'$1').replace(/\.{2,}$/,'.');
+  if(!t)return t;
+  if(cat==='initials'){                                                 // "saturday club of bored adults" -> "Saturday Club of Bored Adults"
+    const cut=t.search(/[:(]/);const head=cut<0?t:t.slice(0,cut),rest=cut<0?'':t.slice(cut);
+    const small=/^(a|an|and|the|of|for|to|in|on|at|by|with|or|de|du|la|le)$/i;
+    t=head.split(' ').map((w,i)=>(i>0&&small.test(w))?w.toLowerCase():w.charAt(0).toUpperCase()+w.slice(1)).join(' ')+rest;
+  }
+  if(cat!=='law')t=t.charAt(0).toUpperCase()+t.slice(1);
+  if(!/[.!?]["”')\]]?$/.test(t))t+='.';
+  return t;
+}
+function guideExamples(G,n){
+  const deck=DECKS[G.cat]||[];const cur=String(G.word||'').toLowerCase();
+  const pool=deck.filter(([w])=>w.toLowerCase()!==cur);if(!pool.length)return [];
+  let h=0;for(const ch of G.cat+':'+G.round+':'+cur)h=(h*31+ch.charCodeAt(0))>>>0;
+  const out=[];for(let k=0;k<Math.min(n,pool.length);k++){const i=(h+k*7919)%pool.length;if(!out.includes(pool[i]))out.push(pool[i]);}
+  return out;
+}
+function formatGuide(G){
+  const cat=catOf(G);const ex=guideExamples(G,2);
+  return `<div class="card guide"><span class="eyebrow">💡 What real answers look like</span>
+  <ul class="guide-tips">${(cat.coach||[]).map(t=>`<li>${esc(t)}</li>`).join('')}</ul>
+  ${ex.map(([w,d])=>`<div class="guide-ex">${G.cat==='law'?`<span class="muted">${esc(w)}</span> <b>${esc(d)}</b>`:`<b>${esc(w)}</b><span class="muted"> → </span>${esc(d)}`}</div>`).join('')}
+  <p class="muted small" style="margin:8px 0 0">Don't worry about capitals or the final period. The game tidies every answer to match.</p></div>`;
+}
 function toVote(g,inp,close){
   const subs={};
-  for(const p of g.order){if(p!==g.dasher&&inp[p]&&inp[p].sub)subs[p]=String(inp[p].sub).slice(0,160);}
+  for(const p of g.order){if(p!==g.dasher&&inp[p]&&inp[p].sub){const t=tidy(String(inp[p].sub).slice(0,160),g.cat,g.word);if(t)subs[p]=t;}}
   g.closed=(Array.isArray(close)?close:[]).filter(p=>subs[p]!=null);
   g.closedT={};for(const p of g.closed)g.closedT[p]=subs[p];
   const opts=Object.keys(subs).filter(p=>!g.closed.includes(p)).map(p=>({t:subs[p],a:p}));
-  opts.push({t:g.def,a:'*'});
+  opts.push({t:g.def,a:'*'});   // real answers are already in house style; bluffs are tidied to match
   g.opts=shuffle(opts);g.votes={};g.phase='vote';g.def='';g.deadline=0;
 }
 function toReveal(g,inp){
@@ -151,6 +190,7 @@ function deckStats(){let total=0,left=0;for(const k of CAT_KEYS){const d=DECKS[k
 
 /* ================= room plumbing ================= */
 (async()=>{
+  await null;
   try{if(window.claude&&typeof window.claude.use==='function'){
     const [r,d,t]=await Promise.all([window.claude.use('room').catch(()=>null),window.claude.use('db').catch(()=>null),window.__SIM?null:window.claude.use('tts').catch(()=>null)]);S.room=r;S.db=d;S.tts=t;}}catch(e){}
   S.roomReady=true;render();resume();
@@ -375,9 +415,9 @@ function playerView(c){
   if(ph==='write'){
     if(!inGame)return wordCard(G)+waitCard('Players are writing…','You\'ll be dealt in next round.');
     const mine=c.inp[a]&&c.inp[a].sub;const up=remain(G)<=0;
-    if(mine&&!S.editing)return wordCard(G)+`<div class="card stack"><span class="eyebrow">Your answer · locked in ✓</span><p class="def">${esc(mine)}</p>${up?'':'<button class="sec" data-act="edit">Edit</button>'}</div>`+waitCard('Waiting for the others…');
+    if(mine&&!S.editing)return wordCard(G)+`<div class="card stack"><span class="eyebrow">Your answer · locked in ✓</span><p class="def">${esc(tidy(mine,G.cat,G.word))}</p>${up?'':'<button class="sec" data-act="edit">Edit</button>'}</div>`+waitCard('Waiting for the others…');
     if(up)return wordCard(G)+waitCard('⏰ Time\'s up!','Watch the main screen.');
-    return wordCard(G)+`<div class="card stack"><label class="eyebrow" for="sub">${esc(cat.prompt)}</label><textarea id="sub" data-draft="sub" maxlength="160" placeholder="${esc(cat.ph)}"></textarea><div class="muted small"><span id="subn">0</span>/160 · ${esc(cat.hint)}</div><button class="accent big" data-act="submit">Lock in my answer</button></div>`;
+    return wordCard(G)+`<div class="card stack"><label class="eyebrow" for="sub">${esc(cat.prompt)}</label><textarea id="sub" data-draft="sub" maxlength="160" placeholder="${esc(cat.ph)}"></textarea><div class="muted small"><span id="subn">0</span>/160 · ${esc(cat.hint)}</div><button class="accent big" data-act="submit">Lock in my answer</button></div>`+formatGuide(G);
   }
   if(ph==='vote')return wordCard(G)+voteView(c,inGame&&!G.closed.includes(a));
   if(ph==='reveal')return revealView(c,false);

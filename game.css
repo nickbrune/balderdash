@@ -120,6 +120,12 @@ details[open] summary{margin-bottom:10px}
 .themes{display:flex;flex-wrap:wrap;gap:10px}
 .themes button{width:auto;min-height:40px;padding:6px 14px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--ink);background:linear-gradient(180deg,#fff 0,#fff 48%,#f1ecdd 52%,#e8e1cc 100%);box-shadow:0 4px 0 color-mix(in srgb,var(--gold) 70%,#000)}
 .themes button.on{background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0) 50%),var(--gold)}
+/* format guide under the answer box */
+.guide{background:color-mix(in srgb,var(--card) 92%,var(--gold));border-style:dashed;padding:14px 16px}
+.guide-tips{margin:8px 0 10px;padding-left:18px;font-size:14.5px;line-height:1.4}
+.guide-tips li+li{margin-top:4px}
+.guide-ex{font-size:14px;line-height:1.4;padding:8px 10px;margin-top:6px;background:#fff;border:2px solid var(--line);border-radius:10px}
+.guide-ex b{color:var(--ink)}
 /* LED game clock */
 .tbar{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#0b0b0e;color:var(--gold);border:3px solid var(--gold);border-radius:14px;padding:4px 16px;margin:14px 8px 14px;font-family:Bungee,sans-serif;font-size:13px;--b:8px}
 .tbar .t{font-family:VT323,monospace;font-size:40px;line-height:1;color:#ff3b3b;text-shadow:0 0 8px rgba(255,59,59,.85)}

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Balderdash</title>
+<meta name="description" content="A 1980s game-show bluffing party game. One screen runs the game; everyone plays on their phone.">
+<meta name="theme-color" content="#1b36b5">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%9F%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Mr+Dafoe&family=VT323&family=Rubik:ital,wght@0,400;0,500;0,700;0,800;1,400;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="game.css">
+</head>
+<body data-theme="classic">
+<div id="scene" aria-hidden="true"></div><div id="fx" aria-hidden="true"></div>
+<div class="wrap">
+  <header><div class="logo" id="logo"></div><div class="hdr-r" id="hdr"></div></header>
+  <div id="status"></div>
+  <main id="main"></main>
+</div>
+<!-- Multiplayer: PeerJS (MIT) from unpkg, with jsDelivr as a backup -->
+<script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
+<script>window.Peer||document.write('<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"><\/script>')</script>
+<script src="net.js"></script>
+<script src="qr.js"></script>
+<script src="cards.js"></script>
+<script src="game.js"></script>
+<script src="extras.js"></script>
+</body>
+</html>

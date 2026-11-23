@@ -178,7 +178,7 @@ function tutData(){
   const real='Giant mutant rabbits terrorize a ranching town in Arizona.';
   const opts=[{t:'A small-town sheriff discovers the local bowling league is run by werewolves.',a:'c'},{t:'Two rival lighthouse keepers fall in love during a 40-day storm.',a:'a'},{t:real,a:'*'},{t:'A retired astronaut trains a team of competitive sheepdogs.',a:'d'}];
   const votes={a:0,d:0,c:2};
-  const base={v:1,theme:S.theme||'classic',round:3,target:15,tlen:180,order:['a','b','c','d'],names,scores:{a:6,b:8,c:7,d:5},seqs:{},dasher:'b',cat:'movie',
+  const base={v:1,theme:'classic',round:3,target:15,tlen:180,order:['a','b','c','d'],names,scores:{a:6,b:8,c:7,d:5},seqs:{},dasher:'b',cat:'movie',
     word:'Night of the Lepus (1972)',def:real,cardKey:'x',spin:null,deadline:0,opts:[],votes:{},closed:[],closedT:{},step:0,scored:false};
   return {names,real,opts,votes,base,now};
 }

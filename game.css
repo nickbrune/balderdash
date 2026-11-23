@@ -1,10 +1,5 @@
-/* ================= themes: 1980s TV game show ================= */
-:root,body[data-theme=classic]{--bg1:#1b36b5;--bg2:#050b38;--ray:rgba(255,214,64,.10);--pop1:#e0182d;--pop2:#36c5f0;--pop3:#ffcc00;--pop4:#d6157a;--on-pop:#ffffff;--ok:#22c55e;--card:#fffdf4;--ink:#0d1640;--muted:#4a5590;--line:#dfe3f5;--edge:#0d1640;--on-bg:#ffffff;--muted-bg:#c7d0ff;--gold:#ffcc00;--bulb:#ffe680;--tile1:#2f56e0;--tile2:#0e2185;--w0:#e0182d;--w1:#ffcc00;--w2:#36c5f0;--w3:#d6157a;--w4:#ff7a00;--glow:rgba(255,204,0,.5);--chrome:linear-gradient(180deg,#fffbe0 0%,#ffe066 40%,#f0a800 58%,#fff3b0 100%)}
-body[data-theme=thanksgiving]{--bg1:#6b2c0d;--bg2:#1a0903;--ray:rgba(255,180,90,.10);--pop1:#d9480f;--pop2:#a3b13a;--pop3:#f2b134;--pop4:#9c3d1c;--on-pop:#ffffff;--ok:#5fae4e;--card:#fff8ec;--ink:#2b1608;--muted:#7a5a40;--line:#ecd9c0;--edge:#2b1608;--on-bg:#fff4e2;--muted-bg:#f0d2ab;--gold:#f2b134;--bulb:#ffd27a;--tile1:#9a4515;--tile2:#4a1d07;--w0:#d9480f;--w1:#a3b13a;--w2:#f2b134;--w3:#9c3d1c;--w4:#c97b2e;--glow:rgba(242,177,52,.5);--chrome:linear-gradient(180deg,#fff7e0 0%,#ffd38a 40%,#d9761f 58%,#ffe6b8 100%)}
-body[data-theme=christmas]{--bg1:#145c38;--bg2:#03140b;--ray:rgba(255,255,255,.07);--pop1:#e63946;--pop2:#3bb273;--pop3:#f4d35e;--pop4:#1d6b3a;--on-pop:#ffffff;--ok:#3bd17f;--card:#fffdf8;--ink:#13251b;--muted:#566b5e;--line:#dbe8de;--edge:#13251b;--on-bg:#ffffff;--muted-bg:#c4e6d1;--gold:#f4d35e;--bulb:#fff3b0;--tile1:#c62a36;--tile2:#6e0f18;--w0:#e63946;--w1:#3bb273;--w2:#f4d35e;--w3:#1d6b3a;--w4:#b5162b;--glow:rgba(244,211,94,.5);--chrome:linear-gradient(180deg,#ffffff 0%,#fff0b8 40%,#e0b400 58%,#fffbe0 100%)}
-body[data-theme=halloween]{--bg1:#4a1d75;--bg2:#0b0414;--ray:rgba(255,140,0,.10);--pop1:#ff7a00;--pop2:#8bd450;--pop3:#ffb000;--pop4:#9d4edd;--on-pop:#1d1026;--ok:#8bd450;--card:#fbf7ff;--ink:#1d1026;--muted:#665577;--line:#e3d8ef;--edge:#1d1026;--on-bg:#ffffff;--muted-bg:#d6c3ee;--gold:#ffb000;--bulb:#ffc266;--tile1:#6a32a0;--tile2:#2a1145;--w0:#ff7a00;--w1:#8bd450;--w2:#ffb000;--w3:#9d4edd;--w4:#e04e39;--glow:rgba(255,140,0,.5);--chrome:linear-gradient(180deg,#fff 0%,#ffd28a 40%,#ff7a00 58%,#ffe9cc 100%)}
-body[data-theme=newyear]{--bg1:#22307e;--bg2:#03061a;--ray:rgba(255,215,90,.10);--pop1:#d4a017;--pop2:#ff4fa3;--pop3:#ffc93c;--pop4:#8a8fb8;--on-pop:#0f1533;--ok:#3ddc97;--card:#fffdf6;--ink:#0f1533;--muted:#565d86;--line:#e0e3f3;--edge:#0f1533;--on-bg:#ffffff;--muted-bg:#cdd3f5;--gold:#ffc93c;--bulb:#fff1b0;--tile1:#2c3f9e;--tile2:#0c1550;--w0:#ffc93c;--w1:#ff4fa3;--w2:#8ee3ff;--w3:#b9b9d6;--w4:#7b5cff;--glow:rgba(255,201,60,.5);--chrome:linear-gradient(180deg,#fff 0%,#fff0b3 40%,#d4a017 58%,#fffbe8 100%)}
-body[data-theme=july4]{--bg1:#1d3fa0;--bg2:#040a22;--ray:rgba(255,255,255,.08);--pop1:#e5243b;--pop2:#4c8dff;--pop3:#ffd23f;--pop4:#1b3a8c;--on-pop:#ffffff;--ok:#2fbf71;--card:#fffdf8;--ink:#0e1a3d;--muted:#4f5c82;--line:#dde3f2;--edge:#0e1a3d;--on-bg:#ffffff;--muted-bg:#c9d6f7;--gold:#ffd23f;--bulb:#ffffff;--tile1:#2a5ad6;--tile2:#0f2470;--w0:#e5243b;--w1:#4c8dff;--w2:#ffffff;--w3:#1b3a8c;--w4:#ffd23f;--glow:rgba(255,255,255,.45);--chrome:linear-gradient(180deg,#fff 0%,#dfe8ff 40%,#e5243b 58%,#fff 100%)}
+/* ================= the look: a 1980s TV game show ================= */
+:root{--bg1:#1b36b5;--bg2:#050b38;--ray:rgba(255,214,64,.10);--pop1:#e0182d;--pop2:#36c5f0;--pop3:#ffcc00;--pop4:#d6157a;--on-pop:#ffffff;--ok:#22c55e;--card:#fffdf4;--ink:#0d1640;--muted:#4a5590;--line:#dfe3f5;--edge:#0d1640;--on-bg:#ffffff;--muted-bg:#c7d0ff;--gold:#ffcc00;--bulb:#ffe680;--tile1:#2f56e0;--tile2:#0e2185;--w0:#e0182d;--w1:#ffcc00;--w2:#36c5f0;--w3:#d6157a;--w4:#ff7a00;--glow:rgba(255,204,0,.5);--chrome:linear-gradient(180deg,#fffbe0 0%,#ffe066 40%,#f0a800 58%,#fff3b0 100%)}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%}
 body{background:radial-gradient(ellipse 110% 85% at 50% 30%,var(--bg1),var(--bg2) 78%) fixed var(--bg2);color:var(--on-bg);font:16px/1.45 Rubik,system-ui,sans-serif;-webkit-text-size-adjust:100%}
@@ -23,8 +18,6 @@ body{background:radial-gradient(ellipse 110% 85% at 50% 30%,var(--bg1),var(--bg2
 .deco{position:absolute;width:var(--s);height:var(--s);font-size:calc(var(--s)*.85);line-height:1;display:flex;align-items:center;justify-content:center;opacity:.55;animation:twinkle 3.6s ease-in-out infinite;animation-delay:var(--dl)}
 .deco svg{width:100%;height:100%;overflow:visible}
 @keyframes twinkle{50%{transform:scale(.7) rotate(25deg);opacity:.25}}
-.snow{position:absolute;inset:0;background-image:radial-gradient(3px 3px at 20px 30px,#fff 50%,transparent 51%),radial-gradient(2px 2px at 90px 130px,#fff 50%,transparent 51%),radial-gradient(4px 4px at 160px 70px,#fff 50%,transparent 51%),radial-gradient(2.5px 2.5px at 210px 190px,#fff 50%,transparent 51%),radial-gradient(3px 3px at 120px 220px,#fff 50%,transparent 51%);background-size:240px 240px;animation:snow 14s linear infinite;opacity:.75}
-@keyframes snow{to{background-position:40px 240px,-30px 240px,20px 240px,-15px 240px,30px 240px}}
 #fx{position:fixed;inset:0;pointer-events:none;z-index:300;overflow:hidden}
 .bit{position:absolute;top:-10vh;font-size:var(--s);width:var(--s);height:var(--s);animation:fall var(--t) cubic-bezier(.3,.6,.6,1) forwards;animation-delay:var(--dl)}
 .bit svg{width:100%;height:100%}
@@ -117,9 +110,6 @@ details[open] summary{margin-bottom:10px}
 .catgrid button:not(.on){color:var(--ink);background:linear-gradient(180deg,#fff 0,#fff 48%,#f1ecdd 52%,#e8e1cc 100%);box-shadow:0 5px 0 color-mix(in srgb,var(--gold) 70%,#000)}
 .catgrid button.on{background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0) 50%),var(--gold);box-shadow:0 5px 0 color-mix(in srgb,var(--gold) 55%,#000)}
 .catgrid button:last-child:nth-child(odd){grid-column:span 2}
-.themes{display:flex;flex-wrap:wrap;gap:10px}
-.themes button{width:auto;min-height:40px;padding:6px 14px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--ink);background:linear-gradient(180deg,#fff 0,#fff 48%,#f1ecdd 52%,#e8e1cc 100%);box-shadow:0 4px 0 color-mix(in srgb,var(--gold) 70%,#000)}
-.themes button.on{background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0) 50%),var(--gold)}
 /* format guide under the answer box */
 .guide{background:color-mix(in srgb,var(--card) 92%,var(--gold));border-style:dashed;padding:14px 16px}
 .guide-tips{margin:8px 0 10px;padding-left:18px;font-size:14.5px;line-height:1.4}
@@ -155,7 +145,7 @@ details[open] summary{margin-bottom:10px}
 @keyframes wspin{from{transform:rotate(0deg)}to{transform:rotate(var(--rot))}}
 @keyframes widle{to{transform:rotate(360deg)}}
 .wheel .pointer{position:absolute;left:50%;top:-10%;width:15%;height:17%;transform:translateX(-50%);background:linear-gradient(90deg,var(--gold),#fff6c8 50%,var(--gold));clip-path:polygon(0 0,100% 0,50% 100%);z-index:2;filter:drop-shadow(0 3px 0 var(--edge))}
-@media (prefers-reduced-motion:reduce){.pulse,.wheel .wrot.idle,.rays,.spot,.deco,.snow,.tbar.low .t,.marquee::before,.marquee::after,.wheel .bulb{animation:none!important}.wheel .wrot.spinning{animation-duration:.01s}.bit{display:none}button{transition:none}}
+@media (prefers-reduced-motion:reduce){.pulse,.wheel .wrot.idle,.rays,.spot,.deco,.tbar.low .t,.marquee::before,.marquee::after,.wheel .bulb{animation:none!important}.wheel .wrot.spinning{animation-duration:.01s}.bit{display:none}button{transition:none}}
 
 /* ================= main screen (TV) ================= */
 body.board{--u:min(1vw,1.78vh);overflow:hidden}
@@ -239,9 +229,6 @@ body.board #main{height:100%}
 .bd-ctrls select{width:auto;font-size:calc(var(--u)*1.5);padding:calc(var(--u)*.5) calc(var(--u)*1)}
 .bd-ctrls button{width:auto;min-height:0;font-size:calc(var(--u)*1.8);padding:calc(var(--u)*.9) calc(var(--u)*2.6)}
 .bd-ctrls button.sec{font-size:calc(var(--u)*1.3);padding:calc(var(--u)*.7) calc(var(--u)*1.6)}
-.bd-themes{display:flex;flex-wrap:wrap;gap:calc(var(--u)*.9)}
-.bd-themes button{width:auto;min-height:0;font-size:calc(var(--u)*1.15);padding:calc(var(--u)*.4) calc(var(--u)*1.1);text-transform:none;letter-spacing:0;color:var(--ink);background:linear-gradient(180deg,#fff 0,#fff 48%,#f1ecdd 52%,#e8e1cc 100%);box-shadow:0 calc(var(--u)*.35) 0 color-mix(in srgb,var(--gold) 70%,#000)}
-.bd-themes button.on{background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0) 50%),var(--gold)}
 .bd-timer{font-family:VT323,monospace;font-size:calc(var(--u)*9.5);line-height:.95;color:#ff3b3b;background:#0b0b0e;padding:0 calc(var(--u)*2.6);border:calc(var(--u)*.35) solid var(--gold);border-radius:calc(var(--u)*1.4);box-shadow:0 0 calc(var(--u)*2.5) rgba(255,59,59,.4);text-shadow:0 0 calc(var(--u)*1) rgba(255,59,59,.9);margin:calc(var(--u)*1.2)}
 .bd-timer.up{animation:pulse 1s ease-in-out infinite}
 .bd-tbar{width:min(80%,calc(var(--u)*70));height:calc(var(--u)*1.3);background:rgba(0,0,0,.35);border:2px solid var(--gold);border-radius:99px;overflow:hidden}

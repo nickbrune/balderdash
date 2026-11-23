@@ -16,15 +16,8 @@ const CAT_KEYS=Object.keys(CATS);
 const STAR=c=>`<svg viewBox="0 0 40 40"><path d="M20 1 L24.5 15.5 L39 20 L24.5 24.5 L20 39 L15.5 24.5 L1 20 L15.5 15.5 Z" fill="${c}"/></svg>`;
 const SPARKLES=[STAR('var(--gold)'),STAR('#fff'),STAR('var(--bulb)'),STAR('var(--gold)'),STAR('#fff'),STAR('var(--pop2)')];
 const CONFETTI=[STAR('var(--gold)'),STAR('#fff'),'<svg viewBox="0 0 20 30"><rect width="20" height="30" rx="3" fill="var(--pop1)"/></svg>','<svg viewBox="0 0 20 30"><rect width="20" height="30" rx="3" fill="var(--pop2)"/></svg>','<svg viewBox="0 0 20 30"><rect width="20" height="30" rx="3" fill="var(--gold)"/></svg>'];
-const THEMES={
- classic:{label:"Game Show '85",icon:'🌟',tag:"'85",deco:SPARKLES,burst:CONFETTI},
- thanksgiving:{label:'Thanksgiving',icon:'🦃',tag:'Thanksgiving',deco:['🍂','🍁','🦃','🥧','🌽','🍁'],burst:['🍂','🍁','🦃','🥧','🌽']},
- christmas:{label:'Christmas',icon:'🎄',tag:'Christmas',deco:['❄️','🎄','⭐','🎁','🔔','❄️'],burst:['❄️','🎁','⭐','🎄','🍬'],snow:true},
- halloween:{label:'Halloween',icon:'🎃',tag:'Halloween',deco:['🎃','👻','🦇','🕸️','🍬','🦇'],burst:['🎃','👻','🦇','🍬']},
- newyear:{label:"New Year's",icon:'🎆',tag:"New Year's",deco:['🎉','✨','🥂','🎊','🪩','✨'],burst:['🎉','🎊','✨','🥂']},
- july4:{label:'4th of July',icon:'🎇',tag:'4th of July',deco:['🎆','⭐','🎇','🇺🇸','⭐','🎆'],burst:['⭐','🎆','🇺🇸','🎇']}
-};
-const THEME_KEYS=Object.keys(THEMES);
+/* One look only: the 1980s TV game show. */
+const THEMES={classic:{label:"Game Show '85",icon:'🌟',tag:"'85",deco:SPARKLES,burst:CONFETTI}};
 const DECKS=window.DECKS||{word:[["Absquatulate","To leave abruptly."]],person:[],initials:[],movie:[],law:[]};
 
 const $=s=>document.querySelector(s);
@@ -42,7 +35,7 @@ const S={theme:'',mode:null,room:null,db:null,roomReady:false,named:null,code:''
 {const m=/^#join-([a-z]{4})$/i.exec(location.hash||'');if(m){S.hashCode=m[1].toUpperCase();S.drafts.jc=S.hashCode;}}
 
 /* ================= game engine (runs on the main screen) ================= */
-function newGame(){return {v:1,theme:THEMES[store.get('bd-theme')]?store.get('bd-theme'):'classic',phase:'lobby',round:0,target:15,tlen:180,order:[],names:{},scores:{},seqs:{},dasher:null,
+function newGame(){return {v:1,theme:'classic',phase:'lobby',round:0,target:15,tlen:180,order:[],names:{},scores:{},seqs:{},dasher:null,
   cat:'word',word:'',def:'',cardKey:'',spin:null,deadline:0,opts:[],votes:{},closed:[],closedT:{},step:0,scored:false}}
 function normG(g){
   const o=Object.assign({},g);
@@ -52,7 +45,7 @@ function normG(g){
   o.closed=Array.isArray(o.closed)?o.closed:[];
   o.round=+o.round||0;o.target=+o.target||15;o.step=+o.step||0;o.tlen=+o.tlen||180;o.deadline=+o.deadline||0;
   if(!CATS[o.cat])o.cat='word';
-  if(!THEMES[o.theme])o.theme='classic';
+  o.theme='classic';
   return o;
 }
 const presentOrder=(g,present)=>g.order.filter(p=>present.has(p));
@@ -153,7 +146,6 @@ function applyCmd(g,pid,c,a,inp,present){
   const H=pid===g.dasher;const pc=g.phase==='pick'||g.phase==='card';
   switch(c){
     case 'start':if(g.phase==='lobby'&&presentOrder(g,present).length>=3){g.order=presentOrder(g,present);startRound(g,inp,present);}break;
-    case 'theme':if(g.phase==='lobby'&&THEMES[a])g.theme=a;break;
     case 'cat':if(H&&pc&&CATS[a]){g.cat=a;g.spin=null;draw(g);g.phase='card';}break;
     case 'spin':if(H&&pc){const k=CAT_KEYS[Math.floor(Math.random()*CAT_KEYS.length)];g.cat=k;g.spin={c:k,id:Date.now()};draw(g);g.phase='card';}break;
     case 'redraw':if(H&&g.phase==='card')draw(g);break;
@@ -307,7 +299,6 @@ function scoreList(G,d){
 }
 function howTo(){return `<details class="card how"><summary>How to play &amp; scoring</summary>
   <p>Open the game on a TV or laptop and tap <b>Start a game on this screen</b>. Everyone else scans the QR code with their phone.</p>
-  <p>Pick a theme in the lobby: Classic '85, or a holiday look like Thanksgiving or Christmas.</p>
   <p>Players take turns <b>hosting</b> a round. The host picks a category, or spins the wheel, and secretly sees the real answer:</p>
   <ul><li>📖 <b>Word</b>: what does it mean?</li><li>🧑 <b>Person</b>: who were they?</li><li>🔤 <b>Initials</b>: what do they stand for?</li><li>🎬 <b>Movie</b>: what's the plot?</li><li>⚖️ <b>Law</b>: how does it end?</li></ul>
   <p>Everyone else gets 3 minutes to write a convincing bluff. The host can mark any that are basically right, then puts all the answers on the main screen, and everyone votes for the one they think is real.</p>
@@ -332,7 +323,6 @@ function lobbyView(c){
   const G=c.G;const ps=presentOrder(G,c.present);const inG=G.order.includes(myPid);
   return `<div class="card center"><span class="eyebrow">Room ${esc(S.code)}</span><div class="word">${inG?`You're in, ${nm(G,myPid)}!`:'Joining…'}</div><p class="muted small" style="margin:0">Watch the main screen. When everyone's here, anyone can start.</p></div>
   <div class="card"><span class="eyebrow">Players (${ps.length})</span><ul class="plist">${ps.map(p=>`<li><span>${nm(G,p)}${p===myPid?' <span class="muted small">(you)</span>':''}</span></li>`).join('')}</ul></div>
-  <div class="card stack"><span class="eyebrow">Theme · everyone sees it</span>${themePicker('ptheme')}</div>
   <button class="accent big" data-act="cmd" data-c="start" ${ps.length<3?'disabled':''}>Everyone's in. Start the game!</button>${ps.length<3?'<p class="muted small center">Need at least 3 players.</p>':''}${howTo()}`;
 }
 /* ---- round host console ---- */
@@ -469,7 +459,6 @@ function boardView(c){
       <div class="bd-ctrls"><label>Play to <select data-change="target">${[10,15,20,25,30].map(x=>`<option value="${x}" ${x===G.target?'selected':''}>${x} points</option>`).join('')}</select></label>
       <label>Timer <select data-change="tlen">${[60,90,120,180,240,300].map(x=>`<option value="${x}" ${x===G.tlen?'selected':''}>${fmt(x*1000)}</option>`).join('')}</select></label>
       <button class="accent" data-act="bstart" ${ps.length<3?'disabled':''}>Start game</button><button class="sec" data-act="tutorial">▶ How to play</button><button class="sec" data-act="bsim">${S.confirm==='bsim'?'Tap again: close room &amp; test':'🛋️ Test mode'}</button></div>
-      ${themePicker('settheme','bd-themes')}
       <p class="bd-sub small">${ps.length<3?`Need at least 3 players (${ps.length} joined) · `:''}${ds.left} of ${ds.total} cards still unplayed</p></div></div>`;break;}
     case 'pick':stage=`<div class="bd-center ${A}"><div class="bd-kicker">Round ${G.round}</div><div class="bd-head">🎤 ${dn} is hosting</div>${wheel(G,true)}<p class="bd-sub pulse">Choosing a category…</p></div>`;break;
     case 'card':{const spun=!!G.spin;
@@ -501,7 +490,6 @@ function boardView(c){
   const q=side?qrImg():'';
   const sideHtml=side?`<aside class="bd-side marquee"><div class="bd-kicker">Scores</div>${bdScores(G,null,'',c)}
     <div class="bd-sidefoot">${q?`<img src="${q}" alt="QR code to join">`:''}<span class="lbl">First to ${G.target} · Scan to join</span>
-    <select data-change="theme" aria-label="Theme">${THEME_KEYS.map(t=>`<option value="${t}" ${t===G.theme?'selected':''}>${THEMES[t].icon} ${esc(THEMES[t].label)}</option>`).join('')}</select>
     <div><button class="ghost" data-act="bskip">${S.confirm==='bskip'?'Tap again to skip':'Skip host'}</button> <button class="ghost" data-act="bend">${S.confirm==='bend'?'Tap again to end':'End game'}</button></div></div></aside>`:'';
   return `<div class="bd ${side?'':'noside'}"><div class="bd-main">${top}<div class="bd-stage">${stage}</div></div>${sideHtml}</div>`;
 }
@@ -514,12 +502,11 @@ function boardWait(){
 const logoHTML=t=>`<span class="sign marquee"><b>BALDERDASH</b></span><i>${esc((THEMES[t]||THEMES.classic).tag)}</i>`;
 const DECO_SPOTS=[[2,24,7,0],[94,22,6,1.3],[5,52,5,2.1],[95,54,6,.6],[3,84,6,3.2],[92,86,5,1.8],[24,93,4,2.6],[48,95,5,.9],[72,93,4,1.1]];
 function sceneHTML(t){const th=THEMES[t]||THEMES.classic;
-  return `<div class="rays"></div><div class="spot l"></div><div class="spot r"></div><div class="floor"></div>${th.snow?'<div class="snow"></div>':''}`+
+  return `<div class="rays"></div><div class="spot l"></div><div class="spot r"></div><div class="floor"></div>`+
     DECO_SPOTS.map(([x,y,sz,dl],i)=>`<div class="deco" style="left:${x}%;top:${y}%;--s:${sz}vmin;--dl:-${dl}s">${th.deco[i%th.deco.length]}</div>`).join('');}
 function applyTheme(t){
   if(!THEMES[t])t='classic';if(S.theme===t)return;S.theme=t;
   document.body.dataset.theme=t;$('#scene').innerHTML=sceneHTML(t);$('#logo').innerHTML=logoHTML(t);
-  if(S.mode==='board')store.set('bd-theme',t);
 }
 function burst(){
   if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
@@ -527,7 +514,6 @@ function burst(){
   for(let i=0;i<36;i++)h+=`<div class="bit" style="left:${Math.random()*100}%;--s:${(2.5+Math.random()*3.5).toFixed(1)}vmin;--t:${(2.6+Math.random()*2).toFixed(2)}s;--dl:${(Math.random()*1.2).toFixed(2)}s;--r:${Math.round(Math.random()*720-360)}deg">${th.burst[i%th.burst.length]}</div>`;
   fx.innerHTML=h;clearTimeout(S.burstT);S.burstT=setTimeout(()=>{fx.innerHTML=''},6000);
 }
-function themePicker(act,cls){const cur=S.theme;return `<div class="${cls||'themes'}">${THEME_KEYS.map(k=>`<button class="${k===cur?'on':''}" data-act="${act}" data-t="${k}" aria-pressed="${k===cur}">${THEMES[k].icon} ${esc(THEMES[k].label)}</button>`).join('')}</div>`;}
 
 /* ================= render ================= */
 function header(){
@@ -537,7 +523,7 @@ function header(){
 function render(){
   if(S.mode==='sim')return;
   document.body.classList.toggle('board',S.mode==='board');
-  {const G=S.mode==='board'?S.myGame:S.mode==='player'?S.G:null;applyTheme(G&&G.theme?G.theme:(store.get('bd-theme')||'classic'));}
+  applyTheme('classic');
   let main,status='';
   if(!S.mode)main=homeView();
   else{
@@ -580,8 +566,6 @@ const H={
   edit(){const c=ctx();S.editing=true;S.drafts.sub=(c.inp[myPid]&&c.inp[myPid].sub)||'';S.lastMain=null;render()},
   pickopt(b){S.voteSel=+b.dataset.i;render()},
   lockvote(){if(S.voteSel==null||!S.G)return;setP({vote:{r:S.G.round,i:S.voteSel}});render()},
-  settheme(b){const t=b.dataset.t;if(!THEMES[t])return;store.set('bd-theme',t);boardAct(g=>{g.theme=t})},
-  ptheme(b){if(THEMES[b.dataset.t])sendCmd('theme',b.dataset.t)},
   bsim(){twoTap('bsim',()=>{leave();H.sim();})},
   bstart(){boardAct((g,inp,present)=>{if(presentOrder(g,present).length>=3){g.order=presentOrder(g,present);startRound(g,inp,present);}})},
   bskip(){twoTap('bskip',()=>boardAct((g,inp,present)=>{if(g.phase!=='lobby'&&g.phase!=='final')startRound(g,inp,present);}))},
@@ -596,7 +580,6 @@ document.addEventListener('input',e=>{const el=e.target;
 document.addEventListener('change',e=>{const el=e.target;
   if(el.dataset.change==='target')boardAct(g=>{g.target=+el.value});
   if(el.dataset.change==='tlen')boardAct(g=>{g.tlen=+el.value});
-  if(el.dataset.change==='theme'&&THEMES[el.value]){store.set('bd-theme',el.value);boardAct(g=>{g.theme=el.value});}
 });
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='jc')H.join();});
 window.__game={H,S,ctx,get pid(){return myPid},setName(n){myName=n},leave};

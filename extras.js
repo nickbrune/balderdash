@@ -1,4 +1,4 @@
-/* Balderdash extras: living-room test mode + narrated tutorial. Loaded only by the real page. */
+/* Balderdash extras: living-room test mode + click-through tutorial. Loaded only by the real page. */
 
 /* ================= shared page shell (used for simulated devices) ================= */
 function shellHTML(prelude){
@@ -214,9 +214,9 @@ const SFX={ctx:null,master:null,noiseBuf:null,muted:false,
   }
 };
 
-/* ================= the tutorial: a 1980s game-show opening ================= */
-const TUT={lastLineAt:0,on:false,i:0,timers:[],tick:null,offLine:null,mode:'',animKey:'',shown:-1};
-const VOICES={announcer:{voice:'rounded',rate:.94},host:{voice:'buttery',rate:1.1}};
+/* ================= the tutorial: a click-through walkthrough ================= */
+/* No narration and no timers: whoever is leading clicks Next when the room is ready. */
+const TUT={on:false,i:0,tick:null,animKey:'',shown:-1,scenes:[]};
 function tutData(){
   const names={a:'Nate',b:'Sarah',c:'Mike',d:'Jess'};
   const real='Giant mutant rabbits terrorize a ranching town in Arizona.';
@@ -227,53 +227,85 @@ function tutData(){
   return {names,real,opts,votes,base};
 }
 function tutPhone(title,body){return `<div class="tut-ph-top"><span class="logo">${logoHTML('classic')}</span><span class="tut-ph-who">${esc(title)}</span></div>${body}`;}
-function tutTitleTV(big,sub,applause){
-  return `<div class="bd noside"><div class="bd-main"><div class="bd-stage"><div class="bd-center anim">${applause?'<div class="applause">APPLAUSE</div>':''}
+function tutTitleTV(big,sub){
+  return `<div class="bd noside"><div class="bd-main"><div class="bd-stage"><div class="bd-center anim">
     <div class="tut-title marquee"><b>${big}</b></div><div class="bd-head tut-sub">${sub}</div></div></div></div></div>`;
 }
+function tutScoredGame(B,D){const g=Object.assign({},B,{phase:'reveal',step:3,opts:D.opts,votes:D.votes,def:'',scores:Object.assign({},B.scores)});const d=deltas(g);for(const k in d)g.scores[k]+=d[k];g.scored=true;return g;}
 function tutScenes(){
   const D=tutData();const B=D.base;
-  const chips=done=>`<div class="chips">${['Nate','Sarah','Mike','Jess'].map(n=>`<span class="chip ${done&&done.includes(n)?'done':''}">${n==='Sarah'?'🎤':''}${n}</span>`).join('')}</div>`;
-  const watch=tutPhone("Mike's phone",waitCard('👀 Eyes on the big screen!'));
+  const chips=done=>`<div class="chips">${['Nate','Mike','Jess'].map(n=>`<span class="chip ${done&&done.includes(n)?'done':''}">${n}${done&&done.includes(n)?' ✓':''}</span>`).join('')}</div>`;
+  const watch=tutPhone("Mike's phone",waitCard('👀 Eyes on the main screen!'));
+  const catList=`<ul class="tut-list">${CAT_KEYS.map(k=>`<li>${CATS[k].icon} <b>${CATS[k].label}</b>: ${esc(CATS[k].eyebrow)}</li>`).join('')}</ul>`;
   return [
-    {who:'announcer',tag:'Tonight’s game',sfx:['fanfare','applause'],dur:7000,
-     text:"Live from your living room... it's the game where the best liar wins! It's... Balderdash!",
-     tv:()=>tutTitleTV('BALDERDASH','The bluffing game show',true),
-     phone:()=>tutPhone('Your phone',`<div class="card center stack"><div style="font-size:54px;line-height:1">📱</div><div class="word">Get your phone ready!</div><p class="muted" style="margin:0">It's your game controller tonight.</p></div>`)},
-    {who:'host',tag:'Step 1 · Grab your phone',sfx:['ding'],dur:9000,
-     text:"Thank you, thank you! Welcome to the show! Getting in is easy: scan the code on the screen, type your name, and boom! You're a contestant!",
+    {tag:'Welcome',sfx:['fanfare'],
+     body:`<p><b>Balderdash is a bluffing game.</b> Each round there's a strange question: an odd word, an obscure person, some initials, an old movie or a weird law.</p>
+       <p>Everyone writes a <b>fake answer</b> that sounds real. The real answer gets mixed in with the fakes, and then everyone votes on which one they think is true.</p>
+       <p>You score by <b>fooling your friends</b> and by <b>spotting the truth</b>.</p>`,
+     tv:()=>tutTitleTV('BALDERDASH','The bluffing game show'),
+     phone:()=>tutPhone('Your phone',`<div class="card center stack"><div style="font-size:54px;line-height:1">📱</div><div class="word">Your phone is your controller</div><p class="muted" style="margin:0">The main screen shows the game. Your phone is where you write and vote.</p></div>`)},
+    {tag:'Join the game',sfx:['ding'],
+     body:`<p>One TV or laptop runs the <b>main screen</b> that everyone can see. It shows a QR code and a 4-letter room code.</p>
+       <ul class="tut-list"><li>📷 Scan the QR code with your phone camera (or type the room code).</li><li>✍️ Type your name and tap <b>Join</b>.</li><li>▶️ You need at least <b>3 players</b>. When everyone's in, anyone can tap <b>Start</b>.</li></ul>`,
      G:()=>Object.assign({},B,{phase:'lobby',round:0,scores:{a:0,b:0,c:0,d:0},dasher:null}),
      phone:()=>tutPhone("Mike's phone",`<div class="card stack"><span class="eyebrow">📱 Join a game</span><input value="Mike" readonly aria-label="Name"><div class="row"><input class="code-in" value="DEMO" readonly aria-label="Room code"><button class="accent">Join</button></div></div>`)},
-    {who:'host',tag:'Step 2 · Take your turn as host',sfx:[],dur:7000,
-     text:"Every round, one lucky player becomes the host. And hosts... you get to spin... the... wheel!",
+    {tag:'Every round has a host',sfx:['ding'],
+     body:`<p>Each round, one player is the <b>host</b>. The job rotates, so everyone gets a turn.</p>
+       <p>The host <b>doesn't write a bluff</b> that round. Instead, they run the round from their phone: pick the question, keep the real answer secret, and move the game along.</p>
+       <p>In this example, <b>Sarah</b> is hosting. Nate, Mike and Jess are playing.</p>`,
      G:()=>Object.assign({},B,{phase:'pick'}),
      phone:()=>tutPhone("Sarah's phone · host",`<div class="card hostcall marquee center"><span class="eyebrow">Round 3 · You're the host</span><div class="word">🎤 Your round!</div></div><button class="accent big">🎡 Spin the wheel</button>`)},
-    {who:'host',tag:'Five ways to fool your friends',sfx:['whoosh',['ding',4200]],dur:9000,
-     text:"Words! People! Initials! Movies! And laws! Round and round it goes... and it's a Movie! Only the host sees the real answer, so keep that poker face!",
+    {tag:'Spin for a category',sfx:['whoosh',['ding',4200]],
+     body:`<p>The host <b>spins the wheel</b> (or just picks a category). There are five:</p>${catList}
+       <p>This time the wheel landed on <b>🎬 Movie</b>.</p>`,
      G:()=>Object.assign({},B,{phase:'card',spin:{c:'movie',id:Date.now()}}),
-     phone:()=>tutPhone("Sarah's phone · host",`<div class="card secret stack after" style="animation-delay:4s"><span class="eyebrow">🎬 Movie · only you can see this</span><div class="word">Night of the Lepus (1972)</div><p class="def">${esc(D.real)}</p><button class="accent">📺 Show question on screen</button></div>`)},
-    {who:'host',tag:'Step 3 · Bluff!',sfx:['ding'],dur:9500,
-     text:"Up goes the question, and the clock is ticking! You've got three minutes to cook up a fake answer so convincing... your own mother would believe it!",
-     G:()=>Object.assign({},B,{phase:'write',deadline:Date.now()+172000}),inp:{a:{sub:'x'},c:{sub:'x'}},
+     phone:()=>tutPhone("Sarah's phone · host",`<div class="card center">${wheel(Object.assign({},B,{spin:{c:'movie',id:0}}))}</div>`)},
+    {tag:'Only the host sees the answer',sfx:['ding'],
+     body:`<p>The host's phone shows the question <b>and the real answer</b>. Nobody else gets to see it, so <b>keep a poker face!</b></p>
+       <ul class="tut-list"><li>🔁 If the host thinks someone might already know it, they can tap <b>Different card</b>.</li><li>📺 When ready, the host taps <b>Show question on screen</b>.</li></ul>`,
+     G:()=>Object.assign({},B,{phase:'card',spin:null}),
+     phone:()=>tutPhone("Sarah's phone · host",`<div class="card secret stack"><span class="eyebrow">🎬 Movie · only you can see this</span><div class="word">Night of the Lepus (1972)</div><p class="def">${esc(D.real)}</p><button class="accent">📺 Show question on screen</button><div class="row"><button class="sec">Different card</button><button class="sec">🎡 Spin again</button></div></div>`)},
+    {tag:'Write your bluff',sfx:['ding'],
+     body:`<p>The question goes up on the main screen. Everyone except the host has <b>3 minutes</b> to write a fake answer that sounds real.</p>
+       <ul class="tut-list"><li>🎭 Match the style. A movie answer should read like a TV-guide blurb, a word like a dictionary.</li><li>🔒 Tap <b>Lock in my answer</b> when you're done. The main screen shows who's finished.</li><li>⏱️ The host can add 30 seconds if people need more time.</li></ul>`,
+     G:()=>Object.assign({},B,{phase:'write',deadline:Date.now()+142000}),inp:{a:{sub:'x'},c:{sub:'x'}},
      phone:()=>tutPhone("Mike's phone",`${chips(['Nate','Mike'])}<div class="card stack"><label class="eyebrow">Write a one-line plot summary</label><textarea readonly aria-label="Answer">A small-town sheriff discovers the local bowling league is run by werewolves.</textarea><button class="accent big">Lock in my answer</button></div>`)},
-    {who:'host',tag:'Step 4 · Spot the truth',sfx:['ding'],dur:9000,
-     text:"And now, the moment of truth! Every answer hits the board, with the real one hiding among the fakes. Can you spot it? Lock in your vote!",
+    {tag:'Did anyone get it right?',sfx:['ding'],
+     body:`<p>As bluffs come in, the host reads them on their phone. If someone's answer is <b>basically the real answer</b>, the host taps <b>Correct</b>.</p>
+       <p>That player gets <b>+3 points</b> right away and sits out the vote, since they already know the answer.</p>
+       <p>When everyone's locked in, the host taps <b>Display answers on screen</b>.</p>`,
+     G:()=>Object.assign({},B,{phase:'write',deadline:Date.now()+61000}),inp:{a:{sub:'x'},c:{sub:'x'},d:{sub:'x'}},
+     phone:()=>tutPhone("Sarah's phone · host",`<div class="card"><span class="eyebrow">Locked in: 3 of 3</span>${D.opts.filter(o=>o.a!=='*').map(o=>`<div class="lockrow"><span class="who">✅ ${D.names[o.a]}</span><span class="ans">${esc(o.t)}</span><button>Correct?</button></div>`).join('')}</div>
+       <button class="accent big">📺 Display answers on screen</button>`)},
+    {tag:'Vote for the real one',sfx:['ding'],
+     body:`<p>All the bluffs and the real answer appear on the main screen, <b>shuffled and numbered</b>. Nobody knows which is which.</p>
+       <ul class="tut-list"><li>🗳️ On your phone, pick the one you think is <b>real</b> and lock in your vote.</li><li>🚫 You can't vote for your own answer.</li><li>🔄 You can change your vote until the host reveals the votes.</li></ul>`,
      G:()=>Object.assign({},B,{phase:'vote',opts:D.opts,def:''}),inp:{c:{vote:2}},
-     phone:()=>tutPhone("Mike's phone",`<div class="card stack"><span class="eyebrow">Which one is real?</span>${D.opts.map((o,i)=>`<div class="opt ${i===2?'sel':''} ${o.a==='c'?'mine':''}"><span class="n">${i+1}</span>${esc(o.t)}${o.a==='c'?'<span class="tag">Yours</span>':''}</div>`).join('')}</div>`)},
-    {who:'host',tag:'The big reveal',sfx:['drumroll'],dur:5000,
-     text:"Let's see how everybody voted...",
+     phone:()=>tutPhone("Mike's phone",`<div class="card stack"><span class="eyebrow">Which one is real?</span>${D.opts.map((o,i)=>`<div class="opt ${i===2?'sel':''} ${o.a==='c'?'mine':''}"><span class="n">${i+1}</span>${esc(o.t)}${o.a==='c'?'<span class="tag">Yours</span>':''}</div>`).join('')}<button class="accent big">Lock in vote</button></div>`)},
+    {tag:'Reveal the votes',sfx:['drumroll'],
+     body:`<p>Once the votes are in, the host reveals them on the main screen. You can see <b>who voted for which answer</b>.</p>
+       <p>Nate and Jess both picked answer #1. Mike picked #3. But which one is real…?</p>`,
      G:()=>Object.assign({},B,{phase:'reveal',step:1,opts:D.opts,votes:D.votes,def:''}),phone:()=>watch},
-    {who:'host',tag:'The big reveal',sfx:['applause'],burst:true,dur:8500,
-     text:"And here's who wrote what! Ohhh! Mike's werewolf bowling league fooled two people, and he found the real answer! Give it up for Mike!",
+    {tag:'Who wrote what',sfx:['applause'],burst:true,
+     body:`<p>Next, the host reveals <b>who wrote each answer</b>, and the real one lights up.</p>
+       <p>#3 was the real plot, and <b>Mike found it</b>. Mike's werewolf bowling bluff (#1) also <b>fooled Nate and Jess</b>!</p>`,
      G:()=>Object.assign({},B,{phase:'reveal',step:2,opts:D.opts,votes:D.votes,def:''}),phone:()=>watch},
-    {who:'host',tag:'How to win',sfx:['dingding'],dur:10500,
-     text:"Here's how you score! Two points for finding the truth. One point for every friend you fool. And if nobody finds it, the host takes three! First to fifteen wins it all!",
-     G:()=>{const g=Object.assign({},B,{phase:'reveal',step:3,opts:D.opts,votes:D.votes,def:'',scores:Object.assign({},B.scores)});const d=deltas(g);for(const k in d)g.scores[k]+=d[k];g.scored=true;return g;},
-     phone:()=>{const g=tutScenes._last;return tutPhone("Mike's phone",`<div class="card"><span class="eyebrow">Scores</span>${scoreList(g,deltas(g))}</div>`)}},
-    {who:'announcer',tag:'Let’s play!',sfx:['fanfare','applause'],burst:true,dur:7000,
-     text:"So grab your phones, sharpen those bluffs, and get ready to play... Balderdash!",
-     tv:()=>tutTitleTV('LET’S PLAY!','Scan the code to join the game',true),
-     phone:()=>tutPhone('Your phone',`<div class="card center stack"><div style="font-size:54px;line-height:1">🎉</div><div class="word">Come on down!</div><p class="muted" style="margin:0">Close this and tap <b>Join a game</b> to play.</p></div>`)}
+    {tag:'How scoring works',sfx:['dingding'],
+     body:`<ul class="tut-list"><li>✅ <b>+2</b> for voting for the real answer.</li><li>🎭 <b>+1</b> for every player your bluff fools.</li><li>🎯 <b>+3</b> if the host marked your answer as basically right.</li><li>🎤 <b>+3</b> to the host if nobody finds the real answer.</li></ul>
+       <p>This round Mike scored <b>+4</b>: 2 for finding the truth, plus 1 each for fooling Nate and Jess.</p>`,
+     G:()=>tutScoredGame(B,D),
+     phone:()=>{const g=tutScoredGame(B,D);return tutPhone("Mike's phone",`<div class="card"><span class="eyebrow">Scores</span>${scoreList(g,deltas(g))}</div>`)}},
+    {tag:'Pass it on & win',sfx:['ding'],
+     body:`<p>After the scores, the host taps <b>Pass to the next host</b>, and a new round starts with a new host.</p>
+       <p>The first player to reach the target score wins. It's <b>15 points</b> by default, and can be changed on the main screen before the game starts.</p>`,
+     G:()=>Object.assign({},B,{phase:'pick',round:4,dasher:'c',scores:tutScoredGame(B,D).scores}),
+     phone:()=>tutPhone("Mike's phone · host",`<div class="card hostcall marquee center"><span class="eyebrow">Round 4 · You're the host</span><div class="word">🎤 Your round!</div></div><button class="accent big">🎡 Spin the wheel</button>`)},
+    {tag:'Ready to play!',sfx:['fanfare','applause'],burst:true,
+     body:`<p><b>That's it!</b> Quick recap:</p>
+       <ul class="tut-list"><li>🎤 Host spins, sees the real answer, keeps it secret.</li><li>✍️ Everyone else writes a convincing fake.</li><li>🗳️ Vote for the one you think is real.</li><li>🏆 Fool friends and find the truth to score.</li></ul>
+       <p>Close this, scan the code, and let's play.</p>`,
+     tv:()=>tutTitleTV('LET’S PLAY!','Scan the code to join the game'),
+     phone:()=>tutPhone('Your phone',`<div class="card center stack"><div style="font-size:54px;line-height:1">🎉</div><div class="word">Come on down!</div><p class="muted" style="margin:0">Close this and scan the code on the main screen to join.</p></div>`)}
   ];
 }
 function tutTV(sc){
@@ -285,66 +317,60 @@ function tutTV(sc){
 }
 function tutLayout(){
   const o=$('#tut');if(!o)return;const wide=innerWidth>=820;
-  let tvW=wide?Math.min(innerWidth*.6,(innerHeight-250)*16/9):innerWidth-28;tvW=Math.max(240,tvW);
+  let tvW=wide?Math.min(innerWidth*.6,(innerHeight-330)*16/9):innerWidth-28;tvW=Math.max(240,tvW);
   const tvH=tvW*9/16;const sc=tvW/1920;
-  const ph=wide?Math.min(tvH/780,.62):Math.max(.26,Math.min((innerHeight-tvH-430)/780,.45));
+  const ph=wide?Math.min(tvH/780,.62):Math.max(.26,Math.min((innerHeight-tvH-480)/780,.45));
   const tv=$('#tut-tv'),p=$('#tut-ph');
   tv.style.width=tvW+'px';tv.style.height=tvH+'px';tv.firstElementChild.style.transform=`scale(${sc})`;
   p.style.width=(390*ph)+'px';p.style.height=(780*ph)+'px';p.firstElementChild.style.transform=`scale(${ph})`;
 }
 function tutShow(i){
   const scenes=TUT.scenes;if(i<0||i>=scenes.length)return;TUT.i=i;const sc=scenes[i];
-  sc._g=sc.G?sc.G():{phase:'title'};tutScenes._last=sc._g;
+  if(TUT.shown!==i)TUT.animKey='';
+  sc._g=sc.G?sc.G():{phase:'title'};
   $('#tut-tvin').innerHTML=tutTV(sc);$('#tut-phin').innerHTML=sc.phone();
-  $('#tut-spk').textContent=sc.who==='announcer'?'🎙️ Announcer':'🎤 Your host';
   $('#tut-tag').textContent=sc.tag;const tg=$('#tut-tag');tg.classList.remove('pop');void tg.offsetWidth;tg.classList.add('pop');
-  $('#tut-cap').textContent=sc.text;
+  $('#tut-step').textContent=`Step ${i+1} of ${scenes.length}`;
+  $('#tut-cap').innerHTML=sc.body;
   $('#tut-dots').innerHTML=scenes.map((_,k)=>`<i class="${k<=i?'on':''}"></i>`).join('');
-  $('#tut-next').textContent=i>=scenes.length-1?'↺ Replay':'⏭ Skip';
-  if(TUT.shown!==i){TUT.shown=i;for(const s of sc.sfx||[]){if(Array.isArray(s))SFX.play(s[0],s[1]);else SFX.play(s);}
-    if(sc.burst)setTimeout(()=>{if(TUT.on)burst();},250);}
+  const back=$('#tut-back');back.disabled=i===0;
+  const nx=$('#tut-next');const last=i>=scenes.length-1;
+  nx.textContent=last?'✓ Done, let’s play!':'Next ▶';nx.dataset.act=last?'tutclose':'tutnext';
+  if(TUT.shown!==i){TUT.shown=i;SFX.stop();for(const s of sc.sfx||[]){if(Array.isArray(s))SFX.play(s[0],s[1]);else SFX.play(s);}
+    if(sc.burst)setTimeout(()=>{if(TUT.on&&TUT.i===i)burst();},250);}
+  nx.focus({preventScroll:true});
 }
-function tutTimed(from){
-  TUT.mode='timed';TUT.timers.forEach(clearTimeout);TUT.timers=[];let t=0;
-  for(let k=from;k<TUT.scenes.length;k++){const kk=k;TUT.timers.push(setTimeout(()=>tutShow(kk),t));t+=TUT.scenes[k].dur;}
-}
-function tutSpeak(from){
-  TUT.timers.forEach(clearTimeout);TUT.timers=[];TUT.shown=-1;tutShow(from);
-  if(!S.tts){$('#tut-voice').textContent='Captions only (this browser can’t read aloud)';tutTimed(from);return;}
-  TUT.mode='voice';$('#tut-voice').textContent='';
-  TUT.lastLineAt=Date.now();
-  if(!TUT.offLine)TUT.offLine=S.tts.onLine(e=>{if(!TUT.on||TUT.mode!=='voice')return;TUT.lastLineAt=Date.now();const k=+String(e.id||'').slice(1);if(Number.isInteger(k)&&k!==TUT.i)tutShow(k);});
-  const lines=TUT.scenes.slice(from).map((s,k)=>Object.assign({text:s.text,id:'s'+(from+k),language:'en'},VOICES[s.who]||VOICES.host));
-  S.tts.speak(lines,{language:'en'}).catch(e=>{
-    if(!TUT.on)return;if(e&&e.code==='stopped'&&e.reason==='replaced')return;
-    $('#tut-voice').textContent='Captions only';tutTimed(TUT.i);
-  });
+function tutKey(e){
+  if(!TUT.on||e.target.closest('input,textarea,select'))return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'){e.preventDefault();H.tutnext();}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();H.tutback();}
+  else if(e.key==='Escape'){e.preventDefault();closeTutorial();}
 }
 function openTutorial(){
-  closeTutorial(true);TUT.on=true;TUT.scenes=tutScenes();TUT.animKey='';TUT.shown=-1;
+  closeTutorial();TUT.on=true;TUT.scenes=tutScenes();TUT.animKey='';TUT.shown=-1;
   SFX.init();
   const o=document.createElement('div');o.id='tut';o.setAttribute('role','dialog');o.setAttribute('aria-label','How to play Balderdash');
-  o.innerHTML=`<div class="tut-in"><div class="tut-head"><span class="eyebrow">▶ How to play · about a minute</span><span class="tut-voice" id="tut-voice"></span></div>
+  o.innerHTML=`<div class="tut-in"><div class="tut-head"><span class="eyebrow">▶ How to play</span><span class="tut-step" id="tut-step"></span></div>
     <div class="tut-stage"><div class="tut-tv" id="tut-tv" inert><div class="tut-tvin" id="tut-tvin"></div></div><div class="tut-ph" id="tut-ph" inert><div class="tut-phin" id="tut-phin"></div></div></div>
-    <div class="tut-capbox"><div class="tut-caphead"><span class="tut-tag" id="tut-tag"></span><span class="tut-spk" id="tut-spk"></span></div><p class="tut-cap" id="tut-cap" aria-live="polite"></p><div class="tut-dots" id="tut-dots"></div>
-    <div class="tut-ctrls"><button class="sec" data-act="tutsound" id="tut-sound" aria-pressed="${!SFX.muted}">${SFX.muted?'🔇 Sound off':'🔊 Sound on'}</button><button class="sec" id="tut-next" data-act="tutnext">⏭ Skip</button><button class="accent" data-act="tutclose">✕ Close</button></div></div></div>`;
+    <div class="tut-capbox"><div class="tut-caphead"><span class="tut-tag" id="tut-tag"></span></div><div class="tut-cap" id="tut-cap" aria-live="polite"></div><div class="tut-dots" id="tut-dots"></div>
+    <div class="tut-ctrls"><button class="sec" data-act="tutsound" id="tut-sound" aria-pressed="${!SFX.muted}">${SFX.muted?'🔇 Sound off':'🔊 Sound on'}</button><button class="sec" data-act="tutclose">✕ Exit</button><span class="tut-gap"></span><button class="sec" id="tut-back" data-act="tutback">◀ Back</button><button class="accent" id="tut-next" data-act="tutnext">Next ▶</button></div></div></div>`;
   document.body.appendChild(o);document.body.classList.add('tut-open');
-  tutLayout();window.addEventListener('resize',tutLayout);
-  TUT.tick=setInterval(()=>{if(!TUT.on)return;
-    if(TUT.mode==='voice'){const sc=TUT.scenes[TUT.i];if(sc&&Date.now()-TUT.lastLineAt>sc.dur+5000&&TUT.i<TUT.scenes.length-1){TUT.mode='timed';try{S.tts.stop().catch(()=>{});}catch(e){}$('#tut-voice').textContent='Captions only';tutTimed(TUT.i+1);}}
-    const sc=TUT.scenes[TUT.i];if(sc&&sc._g&&(sc._g.phase==='write'||sc._g.phase==='card'))$('#tut-tvin').innerHTML=tutTV(sc);},500);
-  tutSpeak(0);
+  tutLayout();window.addEventListener('resize',tutLayout);document.addEventListener('keydown',tutKey);
+  /* keep the spinning wheel animating; nothing here advances the steps */
+  TUT.tick=setInterval(()=>{if(!TUT.on)return;const sc=TUT.scenes[TUT.i];
+    if(sc&&sc._g&&sc._g.phase==='card'&&sc._g.spin&&spinElapsed(sc._g)<SPIN_MS+1000)$('#tut-tvin').innerHTML=tutTV(sc);},500);
+  tutShow(0);
 }
-function closeTutorial(silent){
-  TUT.on=false;TUT.timers.forEach(clearTimeout);TUT.timers=[];clearInterval(TUT.tick);
-  if(TUT.offLine){try{TUT.offLine()}catch(e){}TUT.offLine=null;}
-  if(S.tts&&!silent)S.tts.stop().catch(()=>{});
+function closeTutorial(){
+  TUT.on=false;clearInterval(TUT.tick);
   SFX.stop();
-  const o=$('#tut');if(o)o.remove();document.body.classList.remove('tut-open');window.removeEventListener('resize',tutLayout);
+  const o=$('#tut');if(o)o.remove();document.body.classList.remove('tut-open');
+  window.removeEventListener('resize',tutLayout);document.removeEventListener('keydown',tutKey);
 }
 Object.assign(H,{
   tutorial(){openTutorial()},
   tutclose(){closeTutorial()},
   tutsound(b){SFX.init();SFX.setMuted(!SFX.muted);if(SFX.muted)SFX.stop();b.textContent=SFX.muted?'🔇 Sound off':'🔊 Sound on';b.setAttribute('aria-pressed',String(!SFX.muted));},
-  tutnext(){if(!TUT.on)return;SFX.init();const n=TUT.i>=TUT.scenes.length-1?0:TUT.i+1;if(TUT.mode==='voice'&&S.tts)tutSpeak(n);else{TUT.shown=-1;tutShow(n);tutTimed(n);}}
+  tutnext(){if(!TUT.on)return;SFX.init();if(TUT.i<TUT.scenes.length-1)tutShow(TUT.i+1);},
+  tutback(){if(!TUT.on)return;SFX.init();if(TUT.i>0)tutShow(TUT.i-1);}
 });

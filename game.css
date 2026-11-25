@@ -305,3 +305,14 @@ body.tut-open{overflow:hidden}
 .tut-spk{font-family:Bungee,sans-serif;font-size:12px;letter-spacing:.06em;color:var(--pop1);margin-top:22px}
 .tut-ctrls{flex-wrap:wrap}
 @media (prefers-reduced-motion:reduce){.tut-tag.pop{animation:none}}
+/* ---------- tutorial: click-through walkthrough ---------- */
+.tut-step{font-family:Bungee,sans-serif;font-size:13px;letter-spacing:.06em;color:var(--on-bg)}
+.tut-cap{font-weight:500;font-size:17px;min-height:7.5em}
+.tut-cap p{margin:0 0 8px}
+.tut-cap p:last-child{margin-bottom:0}
+.tut-list{margin:0 0 8px;padding-left:1.3em}
+.tut-list li{margin:2px 0}
+.tut-caphead{margin:-30px 0 10px}
+.tut-gap{flex:1}
+.tut-ctrls{justify-content:flex-start;align-items:center}
+@media (max-width:560px){.tut-cap{font-size:15px}.tut-gap{display:none}.tut-ctrls #tut-next{flex:1}}

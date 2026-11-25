@@ -184,7 +184,7 @@ function deckStats(){let total=0,left=0;for(const k of CAT_KEYS){const d=DECKS[k
 (async()=>{
   await null;
   try{if(window.claude&&typeof window.claude.use==='function'){
-    const [r,d,t]=await Promise.all([window.claude.use('room').catch(()=>null),window.claude.use('db').catch(()=>null),window.__SIM?null:window.claude.use('tts').catch(()=>null)]);S.room=r;S.db=d;S.tts=t;}}catch(e){}
+    const [r,d]=await Promise.all([window.claude.use('room').catch(()=>null),window.claude.use('db').catch(()=>null),null]);S.room=r;S.db=d;}}catch(e){}
   S.roomReady=true;render();resume();
 })();
 setTimeout(()=>{if(!S.roomReady){S.roomReady=true;render();}},11000);
@@ -280,7 +280,10 @@ function wheelSVG(){
   if(WHEEL_SVG)return WHEEL_SVG;const n=CAT_KEYS.length,R=100;let s='';
   CAT_KEYS.forEach((k,i)=>{const a0=(i*360/n-90)*Math.PI/180,a1=((i+1)*360/n-90)*Math.PI/180;
     s+=`<path class="s${i}" d="M${R},${R} L${(R+R*Math.cos(a0)).toFixed(2)},${(R+R*Math.sin(a0)).toFixed(2)} A${R},${R} 0 0 1 ${(R+R*Math.cos(a1)).toFixed(2)},${(R+R*Math.sin(a1)).toFixed(2)} Z"/>`;
-    s+=`<g transform="rotate(${(i+.5)*360/n} ${R} ${R})"><text x="${R}" y="${R-56}" text-anchor="middle" font-size="24">${CATS[k].icon}</text><text class="l" x="${R}" y="${R-35}" text-anchor="middle" font-size="11">${CATS[k].label.toUpperCase()}</text></g>`;});
+    /* label sits in the wide outer part of the slice; size and squeeze it so it always fits between the slice edges */
+    const lab=CATS[k].label.toUpperCase(),ly=R-58,half=Math.tan(Math.PI/n)*(R-ly-1),maxW=Math.min(2*half-10,74);
+    const fs=Math.max(7,Math.min(13,maxW/(lab.length*.82))),w=Math.min(maxW,lab.length*.82*fs);
+    s+=`<g transform="rotate(${(i+.5)*360/n} ${R} ${R})"><text x="${R}" y="${R-24}" text-anchor="middle" font-size="20">${CATS[k].icon}</text><text class="l" x="${R}" y="${ly}" text-anchor="middle" font-size="${fs.toFixed(1)}" textLength="${w.toFixed(1)}" lengthAdjust="spacingAndGlyphs">${lab}</text></g>`;});
   for(let b=0;b<20;b++){const a=b*18*Math.PI/180;s+=`<circle class="bulb b${b%2}" cx="${(100+93*Math.sin(a)).toFixed(2)}" cy="${(100-93*Math.cos(a)).toFixed(2)}" r="3.4"/>`;}
   return WHEEL_SVG=`<svg viewBox="-4 -4 208 208" aria-hidden="true">${s}<circle class="hub" cx="100" cy="100" r="14"/></svg>`;
 }
@@ -314,7 +317,7 @@ function homeView(){
   const boardCard=`<div class="card stack"><span class="eyebrow">📺 Main screen</span><p class="muted small" style="margin:0">Open this on the laptop or TV everyone can see. It shows a QR code for players to join, and runs the game.</p><button class="${S.hashCode?'sec':'accent'}" data-act="board" ${dis}>Start a game on this screen</button></div>`;
   return `<div class="card"><span class="eyebrow">The totally radical bluffing game</span><h1>Balderdash</h1>
   <p class="muted" style="margin:0 0 14px">Bizarre words, people, initials, movies and laws. Everyone bluffs an answer, and you all vote on which one is real.</p>
-  <div class="row"><button class="accent" data-act="tutorial">▶ 1-min tutorial</button><button class="sec" data-act="sim" ${S.roomReady?'':'disabled'}>🛋️ Test mode</button></div></div>
+  <div class="row"><button class="accent" data-act="tutorial">▶ How to play</button><button class="sec" data-act="sim" ${S.roomReady?'':'disabled'}>🛋️ Test mode</button></div></div>
   ${S.err?`<div class="err">${esc(S.err)}</div>`:''}
   ${S.hashCode?joinCard+boardCard:boardCard+joinCard}${howTo()}
   ${`<div class="card stack"><span class="eyebrow">🛋️ Test it yourself</span><p class="muted small" style="margin:0">Opens a virtual living room with a TV and several phones on this one screen. Click into any device to play its role, or let it play itself.</p><button class="sec" data-act="sim" ${S.roomReady?'':'disabled'}>Open living room test mode</button></div>`}`;

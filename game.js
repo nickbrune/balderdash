@@ -17,7 +17,7 @@ const STAR=c=>`<svg viewBox="0 0 40 40"><path d="M20 1 L24.5 15.5 L39 20 L24.5 2
 const SPARKLES=[STAR('var(--gold)'),STAR('#fff'),STAR('var(--bulb)'),STAR('var(--gold)'),STAR('#fff'),STAR('var(--pop2)')];
 const CONFETTI=[STAR('var(--gold)'),STAR('#fff'),'<svg viewBox="0 0 20 30"><rect width="20" height="30" rx="3" fill="var(--pop1)"/></svg>','<svg viewBox="0 0 20 30"><rect width="20" height="30" rx="3" fill="var(--pop2)"/></svg>','<svg viewBox="0 0 20 30"><rect width="20" height="30" rx="3" fill="var(--gold)"/></svg>'];
 /* One look only: the 1980s TV game show. */
-const THEMES={classic:{label:"Game Show '85",icon:'🌟',tag:"'85",deco:SPARKLES,burst:CONFETTI}};
+const THEMES={classic:{label:'Game Show',icon:'🌟',tag:'',deco:SPARKLES,burst:CONFETTI}};
 const DECKS=window.DECKS||{word:[["Absquatulate","To leave abruptly."]],person:[],initials:[],movie:[],law:[]};
 
 const $=s=>document.querySelector(s);
@@ -499,7 +499,7 @@ function boardWait(){
 }
 
 /* ================= themes ================= */
-const logoHTML=t=>`<span class="sign marquee"><b>BALDERDASH</b></span><i>${esc((THEMES[t]||THEMES.classic).tag)}</i>`;
+const logoHTML=t=>{const tag=(THEMES[t]||THEMES.classic).tag;return `<span class="sign marquee"><b>BALDERDASH</b></span>${tag?`<i>${esc(tag)}</i>`:''}`;};
 const DECO_SPOTS=[[2,24,7,0],[94,22,6,1.3],[5,52,5,2.1],[95,54,6,.6],[3,84,6,3.2],[92,86,5,1.8],[24,93,4,2.6],[48,95,5,.9],[72,93,4,1.1]];
 function sceneHTML(t){const th=THEMES[t]||THEMES.classic;
   return `<div class="rays"></div><div class="spot l"></div><div class="spot r"></div><div class="floor"></div>`+

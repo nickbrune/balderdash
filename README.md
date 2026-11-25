@@ -1,4 +1,4 @@
-# Balderdash '85
+# Balderdash
 
 A 1980s game-show bluffing party game. One screen (a TV or laptop) runs the game, and everyone plays on their own phone by scanning a QR code. No accounts, no app install.
 

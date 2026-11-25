@@ -31,7 +31,7 @@ body{background:radial-gradient(ellipse 110% 85% at 50% 30%,var(--bg1),var(--bg2
 @keyframes bulbs{50%{opacity:.25}}
 /* ---- layout ---- */
 .wrap{position:relative;z-index:1;max-width:560px;margin:0 auto;padding:16px 16px 64px}
-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0 24px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0 14px}
 .logo{position:relative;display:inline-block;line-height:1;white-space:nowrap}
 .logo .sign{display:inline-block;padding:7px 12px 6px;border-radius:12px;background:linear-gradient(180deg,var(--tile1),var(--tile2));border:2px solid var(--gold);transform:skewX(-6deg);box-shadow:0 4px 0 rgba(0,0,0,.4);--b:7px}
 .logo b{display:inline-block;font-family:Bungee,Impact,sans-serif;font-weight:400;font-size:21px;letter-spacing:.03em;background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(1px 2px 0 var(--pop1))}

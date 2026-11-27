@@ -171,6 +171,28 @@ body.board #main{height:100%}
 .bd-sub{font-size:calc(var(--u)*2);color:var(--muted-bg);margin:0}
 .bd-sub b{color:var(--gold)}
 .bd-sub.small{font-size:calc(var(--u)*1.5)}
+/* stage fitting: the main screen measures itself so nothing is cut off */
+.bd-fit{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:safe center;transform-origin:50% 0}
+.bd-fit.tight .bd-q{margin:calc(var(--u)*.4) auto calc(var(--u)*1.1);padding:calc(var(--u)*.5) calc(var(--u)*2)}
+.bd-fit.tight .bd-word.sm{font-size:calc(var(--u)*2.4)}
+.bd-fit.tight .bd-word.sm.long{font-size:calc(var(--u)*1.7)}
+.bd-fit.tight .bd-q .bd-kicker{display:none}
+.bd-fit.tight .bd-foot{margin-top:calc(var(--u)*.9);font-size:calc(var(--u)*1.5)}
+.bd-fit.tight .bd-grid{gap:calc(var(--u)*1)}
+/* results + final: header stays put, the leaderboard rolls like movie credits if it's long */
+.bd-results{height:100%;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*1.2);text-align:center}
+.bd-results .bd-ctrls{justify-content:center}
+.bd-final{height:100%;min-height:0;display:grid;grid-template-columns:1fr 1.1fr;gap:calc(var(--u)*4);align-items:stretch}
+.bd-final .bd-word{font-size:calc(var(--u)*5)}
+.bd-final .bd-scores.wide{font-size:calc(var(--u)*2.1)}
+.credits{position:relative;min-height:0;overflow:hidden;flex:0 1 auto;width:100%}
+.credits.wide{width:min(100%,calc(var(--u)*66));padding:calc(var(--u)*.6) calc(var(--u)*1.4) calc(var(--u)*1.2)}
+.credits>.bd-scores{will-change:transform}
+.credits>.bd-scores.wide{width:100%;margin:0}
+.credits.rolling{-webkit-mask-image:linear-gradient(transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(transparent,#000 7%,#000 93%,transparent)}
+@keyframes credits{0%,16%{transform:translateY(0)}50%,66%{transform:translateY(var(--dist))}100%{transform:translateY(0)}}
+.bd-side .credits{flex:1 1 auto;padding:calc(var(--u)*.3) calc(var(--u)*.2) calc(var(--u)*.6);margin:0 calc(var(--u)*-.2)}
+@media (prefers-reduced-motion:reduce){.credits>.bd-scores{animation:none!important}.credits.rolling{overflow-y:auto}}
 /* the big question board */
 .bd-panel{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0) 40%),linear-gradient(180deg,var(--tile1),var(--tile2));border:calc(var(--u)*.35) solid var(--gold);border-radius:calc(var(--u)*1.6);padding:calc(var(--u)*1.6) calc(var(--u)*3);box-shadow:0 calc(var(--u)*.7) 0 rgba(0,0,0,.45),0 0 calc(var(--u)*4) var(--glow);max-width:100%}
 .bd-panel.sm{padding:calc(var(--u)*.8) calc(var(--u)*2.4)}

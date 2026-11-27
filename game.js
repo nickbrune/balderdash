@@ -471,10 +471,11 @@ function boardView(c){
       <div class="bd-timer marquee ${r<=0?'up':low?'low':''}">${r>0?fmt(r):'TIME\'S UP!'}</div><div class="bd-tbar ${low?'low':''}"><i style="width:${pct}%"></i></div>
       ${prog(w,p=>c.inp[p]&&c.inp[p].sub)}<p class="bd-sub small">${w.filter(p=>c.inp[p]&&c.inp[p].sub).length} of ${w.length} locked in</p></div>`;break;}
     case 'vote':case 'reveal':{
-      if(G.phase==='reveal'&&st>=3){side=false;const d=deltas(G);stage=`<div class="bd-center ${A}"><div class="applause">APPLAUSE</div><div class="bd-kicker">Round ${G.round} results</div><div class="bd-head">${Object.keys(d).length?'Points this round':'No points this round'}</div>${bdScores(G,d,'wide')}</div>`;break;}
+      if(G.phase==='reveal'&&st>=3){side=false;const d=deltas(G);stage=`<div class="bd-results ${A}"><div class="applause">APPLAUSE</div><div class="bd-kicker">Round ${G.round} results</div><div class="bd-head">${Object.keys(d).length?'Points this round':'No points this round'}</div><div class="credits wide">${bdScores(G,d,'wide')}</div></div>`;break;}
+      side=false;   // answers get the whole width of the TV; scores show after every round
       const voters=i=>Object.keys(G.votes).filter(p=>G.votes[p]===i);
       const extra=G.phase==='reveal'&&st>=2?G.closed.length:0;const n=G.opts.length+extra;
-      const cols=n<=2?1:n<=4?2:3;const fs=n<=2?2.3:n<=4?1.8:n<=6?1.38:n<=9?1.2:1.08;
+      const cols=n<=2?1:n<=4?2:3;const fs=n<=2?2.8:n<=4?2.3:n<=6?2:n<=9?1.75:1.55;
       let cards=G.opts.map((o,i)=>{const real=o.a==='*';const vs=G.phase==='reveal'?voters(i):[];
         const showV=G.phase==='reveal'&&st>=1,showA=G.phase==='reveal'&&st>=2;
         return `<div class="bd-card ${showA&&real?'real':''} ${A&&G.phase==='reveal'&&st===2?'flip':A}" style="--i:${i}"><div class="bd-num">${i+1}</div><div class="bd-body"><div class="bd-txt">${esc(o.t)}</div>
@@ -485,17 +486,63 @@ function boardView(c){
       if(G.phase==='vote'){const v=votersOf(G,c.present);foot=`<div class="bd-foot"><span>Vote on your phone for the real answer</span>${prog(v,p=>c.inp[p]&&Number.isInteger(c.inp[p].vote))}</div>`;}
       else{const found=G.opts.some((o,i)=>o.a==='*'&&voters(i).length);
         foot=`<div class="bd-foot">${st===1?'Here’s how everyone voted…':(!found&&!G.closed.length?`Nobody found it! ${dn} (host) scores +3`:'Who wrote what')}</div>`;}
-      stage=`<div class="bd-q bd-panel sm marquee">${wordBlock('sm')}</div><div class="bd-grid" style="--cols:${cols};--fs:${fs}">${cards}</div>${foot}`;break;}
+      stage=`<div class="bd-q bd-panel sm marquee">${wordBlock('sm')}</div><div class="bd-grid" data-n="${n}" data-fs="${fs}" style="--cols:${cols};--fs:${fs}">${cards}</div>${foot}`;break;}
     case 'final':{side=false;const mx=Math.max(0,...G.order.map(p=>G.scores[p]||0));const win=G.order.filter(p=>(G.scores[p]||0)===mx);
-      stage=`<div class="bd-center ${A}"><div class="applause">APPLAUSE</div><div class="bd-icon">🏆</div><div class="bd-kicker">${win.length>1?'It’s a tie!':'The winner is'}</div><div class="bd-word">${win.map(p=>nm(G,p)).join(' &amp; ')}</div><p class="bd-sub">${mx} points</p>${bdScores(G,null,'wide')}
-      <div class="bd-ctrls"><button class="accent" data-act="bagain">Play again</button></div></div>`;break;}
+      stage=`<div class="bd-final ${A}"><div class="bd-results"><div class="applause">APPLAUSE</div><div class="bd-icon">🏆</div><div class="bd-kicker">${win.length>1?'It’s a tie!':'The winner is'}</div><div class="bd-word">${win.map(p=>nm(G,p)).join(' &amp; ')}</div><p class="bd-sub">${mx} points</p>
+      <div class="bd-ctrls"><button class="accent" data-act="bagain">Play again</button></div></div>
+      <div class="bd-results"><div class="bd-kicker">Final scores</div><div class="credits wide">${bdScores(G,null,'wide')}</div></div></div>`;break;}
   }
   const q=side?qrImg():'';
-  const sideHtml=side?`<aside class="bd-side marquee"><div class="bd-kicker">Scores</div>${bdScores(G,null,'',c)}
+  const sideHtml=side?`<aside class="bd-side marquee"><div class="bd-kicker">Scores</div><div class="credits">${bdScores(G,null,'',c)}</div>
     <div class="bd-sidefoot">${q?`<img src="${q}" alt="QR code to join">`:''}<span class="lbl">First to ${G.target} · Scan to join</span>
     <div><button class="ghost" data-act="bskip">${S.confirm==='bskip'?'Tap again to skip':'Skip host'}</button> <button class="ghost" data-act="bend">${S.confirm==='bend'?'Tap again to end':'End game'}</button></div></div></aside>`:'';
-  return `<div class="bd ${side?'':'noside'}"><div class="bd-main">${top}<div class="bd-stage">${stage}</div></div>${sideHtml}</div>`;
+  return `<div class="bd ${side?'':'noside'}"><div class="bd-main">${top}<div class="bd-stage"><div class="bd-fit">${stage}</div></div></div>${sideHtml}</div>`;
 }
+/* Make the main screen fit whatever TV or laptop it's on: shrink answer text until every tile shows,
+   then tighten the question, then (as a last resort) scale the stage down. Long score lists roll like credits. */
+function fitBoard(root){
+  if(!root||!root.querySelector)return;
+  const fit=root.querySelector('.bd-fit');
+  if(fit){
+    fit.style.transform='';fit.classList.remove('tight');
+    const over=()=>fit.scrollHeight>fit.clientHeight+2;
+    const grid=fit.querySelector('.bd-grid');
+    if(grid){
+      const n=+grid.dataset.n||grid.children.length,start=+grid.dataset.fs||1.6;
+      const tryCols=cols=>{grid.style.setProperty('--cols',cols);let fs=start;grid.style.setProperty('--fs',fs);
+        while(over()&&fs>.78){fs=Math.round((fs-.05)*100)/100;grid.style.setProperty('--fs',fs);}return over()?0:fs;};
+      const options=n<=2?[1,2]:n<=4?[2]:n<=6?[2,3]:[3,4];
+      let best={cols:options[0],fs:-1};
+      for(const tight of [false,true]){
+        fit.classList.toggle('tight',tight);
+        for(const cols of options){const fs=tryCols(cols);if(fs>best.fs+.04)best={cols,fs,tight};}
+        if(best.fs>=1.2)break;          // big enough without tightening the question
+      }
+      fit.classList.toggle('tight',!!best.tight);grid.style.setProperty('--cols',best.cols);
+      grid.style.setProperty('--fs',best.fs>0?best.fs:.78);
+    }
+    if(over()&&!fit.querySelector('.credits')){
+      const s=Math.max(.5,fit.clientHeight/fit.scrollHeight);fit.style.transform=`scale(${s.toFixed(3)})`;
+    }
+  }
+  rollCredits(root);
+}
+const CRED_T0=Date.now();
+function rollCredits(root){
+  root.querySelectorAll('.credits').forEach(box=>{
+    const list=box.firstElementChild;if(!list)return;
+    list.style.animation='none';box.classList.remove('rolling');
+    const over=list.scrollHeight-box.clientHeight;
+    if(over>4){
+      const dur=Math.max(8,over/26*2+5);   // ~26px per second each way, with pauses at the top and bottom
+      list.style.setProperty('--dist',(-over-6)+'px');void list.offsetHeight;
+      // Keyed to a steady clock, so redraws (the timer ticks every second) continue the roll instead of restarting it.
+      const phase=((Date.now()-CRED_T0)/1000)%dur;
+      list.style.animation=`credits ${dur.toFixed(1)}s ease-in-out -${phase.toFixed(2)}s infinite`;box.classList.add('rolling');
+    }
+  });
+}
+if(window.addEventListener)window.addEventListener('resize',()=>{if(S.mode==='board'){clearTimeout(S.fitT);S.fitT=setTimeout(()=>fitBoard($('#main')),150);}});
 function boardWait(){
   const t=Date.now()-S.joinedAt<6500?'Setting up…':'Reconnecting…';
   return `<div class="bd noside"><div class="bd-main"><div class="bd-top"><div class="bd-logo"><span class="logo">${logoHTML(S.theme)}</span></div><div></div><div class="bd-code"><button class="ghost" data-act="leave">✕ Close</button></div></div><div class="bd-stage"><div class="bd-center"><div class="bd-head pulse">${t}</div></div></div></div></div>`;
@@ -542,7 +589,7 @@ function render(){
   $('#hdr').innerHTML=header();
   if(main!==S.lastMain){
     const ae=document.activeElement;const fid=ae&&ae.id;let ss=null,se=null;try{ss=ae.selectionStart;se=ae.selectionEnd}catch(e){}
-    $('#main').innerHTML=main;S.lastMain=main;
+    $('#main').innerHTML=main;S.lastMain=main;if(S.mode==='board')fitBoard($('#main'));
     document.querySelectorAll('[data-draft]').forEach(el=>{el.value=S.drafts[el.dataset.draft]||''});
     const nmEl=$('#nm');if(nmEl)nmEl.value=myName;
     const sn=$('#subn');if(sn)sn.textContent=(S.drafts.sub||'').length;

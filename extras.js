@@ -328,7 +328,7 @@ function tutShow(i){
   const scenes=TUT.scenes;if(i<0||i>=scenes.length)return;TUT.i=i;const sc=scenes[i];
   if(TUT.shown!==i)TUT.animKey='';
   sc._g=sc.G?sc.G():{phase:'title'};
-  $('#tut-tvin').innerHTML=tutTV(sc);$('#tut-phin').innerHTML=sc.phone();
+  $('#tut-tvin').innerHTML=tutTV(sc);fitBoard($('#tut-tvin'));$('#tut-phin').innerHTML=sc.phone();
   $('#tut-tag').textContent=sc.tag;const tg=$('#tut-tag');tg.classList.remove('pop');void tg.offsetWidth;tg.classList.add('pop');
   $('#tut-step').textContent=`Step ${i+1} of ${scenes.length}`;
   $('#tut-cap').innerHTML=sc.body;
@@ -358,7 +358,7 @@ function openTutorial(){
   tutLayout();window.addEventListener('resize',tutLayout);document.addEventListener('keydown',tutKey);
   /* keep the spinning wheel animating; nothing here advances the steps */
   TUT.tick=setInterval(()=>{if(!TUT.on)return;const sc=TUT.scenes[TUT.i];
-    if(sc&&sc._g&&sc._g.phase==='card'&&sc._g.spin&&spinElapsed(sc._g)<SPIN_MS+1000)$('#tut-tvin').innerHTML=tutTV(sc);},500);
+    if(sc&&sc._g&&sc._g.phase==='card'&&sc._g.spin&&spinElapsed(sc._g)<SPIN_MS+1000){$('#tut-tvin').innerHTML=tutTV(sc);fitBoard($('#tut-tvin'));}},500);
   tutShow(0);
 }
 function closeTutorial(){
